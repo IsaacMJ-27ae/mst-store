@@ -1,0 +1,2547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MST Store Management - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .login-title {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(45deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            outline: none;
+        }
+        
+        .login-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-top: 15px;
+            font-weight: 600;
+            display: none;
+        }
+        
+        /* Main app styles - hidden until login */
+        #mainApp {
+            display: none;
+            width: 100%;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 25px;
+            overflow: hidden;
+        }
+        
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .sync-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .sync-online {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .sync-syncing {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .sync-offline {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .last-sync {
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        .logout-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 700;
+            background: linear-gradient(45deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 2px solid #e9ecef;
+            padding: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 12px 15px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            flex: 1;
+            text-align: center;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #6c757d;
+            margin: 0 2px;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        
+        .tab.active {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+            color: #495057;
+            transform: translateY(-1px);
+        }
+        
+        /* Colorful tabs */
+        .tab:nth-child(1).active { background: linear-gradient(45deg, #3498db, #2980b9); }
+        .tab:nth-child(2).active { background: linear-gradient(45deg, #27ae60, #2ecc71); }
+        .tab:nth-child(3).active { background: linear-gradient(45deg, #e74c3c, #c0392b); }
+        .tab:nth-child(4).active { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+        .tab:nth-child(5).active { background: linear-gradient(45deg, #f39c12, #e67e22); }
+        .tab:nth-child(6).active { background: linear-gradient(45deg, #1abc9c, #16a085); }
+        .tab:nth-child(7).active { background: linear-gradient(45deg, #34495e, #2c3e50); }
+        .tab:nth-child(8).active { background: linear-gradient(45deg, #e84393, #fd79a8); }
+        .tab:nth-child(9).active { background: linear-gradient(45deg, #00cec9, #81ecec); }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        button.secondary {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+        }
+        
+        button.secondary:hover {
+            background: linear-gradient(45deg, #5a6268, #495057);
+        }
+        
+        button.success {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+        
+        button.success:hover {
+            background: linear-gradient(45deg, #229954, #27ae60);
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            width: 300px;
+            border-radius: 25px;
+            padding: 12px 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        th {
+            background: linear-gradient(45deg, #34495e, #2c3e50);
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+        
+        .low-stock {
+            color: #e74c3c;
+            font-weight: bold;
+            background: #ffeaea;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            text-align: center;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .card .number {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .alert {
+            padding: 15px;
+            background: linear-gradient(45deg, #ffeaa7, #fab1a0);
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            color: #d63031;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 234, 167, 0.3);
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .cash-positive {
+            color: #27ae60;
+        }
+
+        .cash-negative {
+            color: #e74c3c;
+        }
+
+        .summary-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        .manual-order {
+            background: #e8f5e8;
+            border-left: 4px solid #27ae60;
+        }
+
+        .auto-order {
+            background: #fff3cd;
+            border-left: 4px solid #f39c12;
+        }
+
+        .goods-received {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                margin: 2px 0;
+            }
+            
+            .app-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .search-box input {
+                width: 100%;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <h1 class="login-title">MST Store Management</h1>
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter your username">
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password">
+        </div>
+        <button class="login-btn" onclick="login()">Login</button>
+        <div class="error-message" id="errorMessage">
+            Invalid username or password!
+        </div>
+    </div>
+
+    <!-- Main Application (Hidden until login) -->
+    <div id="mainApp">
+        <div class="container">
+            <div class="app-header">
+                <h1>MST Store Management System</h1>
+                <div>
+                    <div class="sync-status sync-online" id="syncStatus">🟢 Online</div>
+                    <div class="last-sync" id="lastSync">Last sync: --:--:--</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+                <button class="tab" onclick="switchTab('products')">Products</button>
+                <button class="tab" onclick="switchTab('sales')">Sales</button>
+                <button class="tab" onclick="switchTab('goodsToOrder')">Goods to Order</button>
+                <button class="tab" onclick="switchTab('goodsFromMarket')">Goods from Market</button>
+                <button class="tab" onclick="switchTab('goodsToMarket')">Goods to Market</button>
+                <button class="tab" onclick="switchTab('credits')">Credits</button>
+                <button class="tab" onclick="switchTab('expenses')">Expenses</button>
+                <button class="tab" onclick="switchTab('reports')">Reports</button>
+            </div>
+            
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <h3>Total Sales</h3>
+                        <div class="number" id="totalSales">₦0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Total Transfer</h3>
+                        <div class="number" id="totalTransfer">₦0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Total POS</h3>
+                        <div class="number" id="totalPOS">₦0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Total Expenses</h3>
+                        <div class="number" id="totalExpenses">₦0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Cash at Hand</h3>
+                        <div class="number" id="cashAtHand">₦0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Pending Credits</h3>
+                        <div class="number" id="pendingCredits">₦0</div>
+                    </div>
+                </div>
+                
+                <div class="alert" id="lowStockAlert" style="display: none;">
+                    ⚠️ You have <span id="alertCount">0</span> items with low stock!
+                </div>
+                
+                <h3>Recent Goods from Market</h3>
+                <table id="recentGoodsFromMarketTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Supplier</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <h3>Recent Goods to Market</h3>
+                <table id="recentGoodsToMarketTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Destination</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- Products Tab -->
+            <div id="products" class="tab-content">
+                <div style="display: flex; justify-content: between; margin-bottom: 20px; gap: 10px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="showProductForm()">Add New Product</button>
+                        <button onclick="showImportForm()" class="success">Bulk Import Products</button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="productSearch" placeholder="Search products..." onkeyup="searchProducts()">
+                    </div>
+                    <div class="filter-group">
+                        <label>Filter by Category</label>
+                        <select id="categoryFilter" onchange="filterProductsByCategory()">
+                            <option value="">All Categories</option>
+                            <option value="Laptops">Laptops</option>
+                            <option value="Laptop Batteries">Laptop Batteries</option>
+                            <option value="Chargers">Chargers</option>
+                            <option value="Storage Devices">Storage Devices</option>
+                            <option value="Printer/Printer Accessories">Printer/Printer Accessories</option>
+                            <option value="Network Devices">Network Devices</option>
+                            <option value="Laptop Keyboard Replacement">Laptop Keyboard Replacement</option>
+                            <option value="General Computer Accessories">General Computer Accessories</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="productForm" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                    <h3>Add/Edit Product</h3>
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="productName" placeholder="e.g., HP Laptop 15s">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="productCategory">
+                            <option value="">Select Category</option>
+                            <option value="Laptops">Laptops</option>
+                            <option value="Laptop Batteries">Laptop Batteries</option>
+                            <option value="Chargers">Chargers</option>
+                            <option value="Storage Devices">Storage Devices</option>
+                            <option value="Printer/Printer Accessories">Printer/Printer Accessories</option>
+                            <option value="Network Devices">Network Devices</option>
+                            <option value="Laptop Keyboard Replacement">Laptop Keyboard Replacement</option>
+                            <option value="General Computer Accessories">General Computer Accessories</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cost Price (₦)</label>
+                        <input type="number" id="productCost" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Selling Price (₦)</label>
+                        <input type="number" id="productPrice" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Current Stock</label>
+                        <input type="number" id="productStock" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Stock</label>
+                        <input type="number" id="productMinStock" placeholder="5" value="5">
+                    </div>
+                    <button onclick="saveProduct()" class="success">Save Product</button>
+                    <button onclick="hideProductForm()" class="secondary">Cancel</button>
+                </div>
+
+                <div id="importForm" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                    <h3>Bulk Import Products</h3>
+                    <div class="form-group">
+                        <label>Paste CSV Data</label>
+                        <textarea id="csvData" placeholder="Paste CSV data here...
+Format: Name,Category,Cost,Price,Stock,MinStock
+Example: 
+HP Laptop 15s,Laptops,150000,180000,10,5
+USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Or Upload CSV File</label>
+                        <input type="file" id="csvFile" accept=".csv">
+                    </div>
+                    <button onclick="importProducts()" class="success">Import Products</button>
+                    <button onclick="hideImportForm()" class="secondary">Cancel</button>
+                    <button onclick="downloadTemplate()" class="secondary">Download CSV Template</button>
+                </div>
+                
+                <table id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Cost</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+                        <!-- Sales Tab -->
+            <div id="sales" class="tab-content">
+                <h3>Record New Sale</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label>Search Product</label>
+                        <input type="text" id="saleSearch" placeholder="Type product name..." onkeyup="searchSaleProducts()">
+                    </div>
+                    <div id="saleProductsList" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;"></div>
+                    
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="saleQuantity" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Price (₦)</label>
+                        <input type="number" id="salePrice" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer Name (Optional)</label>
+                        <input type="text" id="saleCustomer" placeholder="Customer name">
+                    </div>
+                    <div class="form-group" id="phoneNumberGroup" style="display: none;">
+                        <label>Customer Phone Number <span style="color: red;">*</span></label>
+                        <input type="text" id="saleCustomerPhone" placeholder="Phone number (required for credit)">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <select id="paymentMethod" required onchange="togglePhoneNumber()">
+                            <option value="">Select Payment Method</option>
+                            <option value="cash">Cash</option>
+                            <option value="transfer">Transfer</option>
+                            <option value="pos">POS</option>
+                            <option value="credit">Credit</option>
+                        </select>
+                    </div>
+                    <button onclick="addSaleItem()" class="success">Add to Sale</button>
+                </div>
+                
+                <h3>Today's Sales</h3>
+                <table id="salesTable">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                            <th>Customer</th>
+                            <th>Payment Method</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- Goods to Order Tab -->
+            <div id="goodsToOrder" class="tab-content">
+                <h3>Goods to Order</h3>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                    <h4>Add Manual Order</h4>
+                    <div class="form-group">
+                        <label>Product</label>
+                        <select id="manualOrderProduct">
+                            <option value="">Select Product</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity to Order</label>
+                        <input type="number" id="manualOrderQuantity" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier</label>
+                        <input type="text" id="manualOrderSupplier" placeholder="Supplier name">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="manualOrderNotes" placeholder="Any additional notes"></textarea>
+                    </div>
+                    <button onclick="addManualOrder()" class="success">Add Manual Order</button>
+                </div>
+
+                <button onclick="downloadGoodsToOrderReport()">Download Report</button>
+                
+                <h4>Automatic Orders (Low Stock)</h4>
+                <div class="summary-box auto-order">
+                    <p><strong>Automatically generated from low stock items</strong></p>
+                </div>
+                <table id="autoGoodsToOrderTable">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Current Stock</th>
+                            <th>Min Stock</th>
+                            <th>Need to Order</th>
+                            <th>Supplier</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <h4>Manual Orders</h4>
+                <div class="summary-box manual-order">
+                    <p><strong>Manually added orders</strong></p>
+                </div>
+                <table id="manualGoodsToOrderTable">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Supplier</th>
+                            <th>Notes</th>
+                            <th>Date Added</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- Goods from Market Tab -->
+            <div id="goodsFromMarket" class="tab-content">
+                <h3>Goods Received from Market</h3>
+                <button onclick="showGoodsFromMarketForm()">Add New Entry</button>
+                <button onclick="downloadGoodsFromMarketReport()">Download Report</button>
+                
+                <div id="goodsFromMarketForm" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                    <h4>Record Goods Received</h4>
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="receivedProductName" placeholder="e.g., HP Laptop 15s">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="receivedProductCategory">
+                            <option value="">Select Category</option>
+                            <option value="Laptops">Laptops</option>
+                            <option value="Laptop Batteries">Laptop Batteries</option>
+                            <option value="Chargers">Chargers</option>
+                            <option value="Storage Devices">Storage Devices</option>
+                            <option value="Printer/Printer Accessories">Printer/Printer Accessories</option>
+                            <option value="Network Devices">Network Devices</option>
+                            <option value="Laptop Keyboard Replacement">Laptop Keyboard Replacement</option>
+                            <option value="General Computer Accessories">General Computer Accessories</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier</label>
+                        <input type="text" id="receivedSupplier" placeholder="Supplier name">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity Received</label>
+                        <input type="number" id="receivedQuantity" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Date Received</label>
+                        <input type="date" id="receivedDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="receivedNotes" placeholder="Any additional notes"></textarea>
+                    </div>
+                    <button onclick="saveGoodsFromMarket()" class="success">Save Entry</button>
+                    <button onclick="hideGoodsFromMarketForm()" class="secondary">Cancel</button>
+                </div>
+
+                <div class="filter-section">
+                    <h4>Filter by Date</h4>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>From Date</label>
+                            <input type="date" id="filterFromDateReceived">
+                        </div>
+                        <div class="filter-group">
+                            <label>To Date</label>
+                            <input type="date" id="filterToDateReceived">
+                        </div>
+                        <div class="filter-group">
+                            <button onclick="filterGoodsFromMarket()" class="success">Apply Filter</button>
+                            <button onclick="clearGoodsFromMarketFilter()" class="secondary">Clear Filter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <table id="goodsFromMarketTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Supplier</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- Goods to Market Tab -->
+            <div id="goodsToMarket" class="tab-content">
+                <h3>Goods Sent to Market</h3>
+                <button onclick="showGoodsToMarketForm()">Add New Entry</button>
+                <button onclick="downloadGoodsToMarketReport()">Download Report</button>
+                
+                <div id="goodsToMarketForm" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                    <h4>Record Goods Sent to Market</h4>
+                    <div class="form-group">
+                        <label>Product</label>
+                        <select id="marketProduct">
+                            <option value="">Select Product</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity Sent</label>
+                        <input type="number" id="marketQuantity" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Destination/Market</label>
+                        <input type="text" id="marketDestination" placeholder="e.g., Main Market, Branch Store">
+                    </div>
+                    <div class="form-group">
+                        <label>Date Sent</label>
+                        <input type="date" id="marketDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="marketNotes" placeholder="Any additional notes"></textarea>
+                    </div>
+                    <button onclick="saveGoodsToMarket()" class="success">Save Entry</button>
+                    <button onclick="hideGoodsToMarketForm()" class="secondary">Cancel</button>
+                </div>
+
+                <div class="filter-section">
+                    <h4>Filter by Date</h4>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>From Date</label>
+                            <input type="date" id="filterFromDate">
+                        </div>
+                        <div class="filter-group">
+                            <label>To Date</label>
+                            <input type="date" id="filterToDate">
+                        </div>
+                        <div class="filter-group">
+                            <button onclick="filterGoodsToMarket()" class="success">Apply Filter</button>
+                            <button onclick="clearGoodsFilter()" class="secondary">Clear Filter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <table id="goodsToMarketTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Destination</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- Credits Tab -->
+            <div id="credits" class="tab-content">
+                <h3>Credit Records</h3>
+                <button onclick="downloadCreditReport()">Download Credit Report</button>
+                <table id="creditsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Amount</th>
+                            <th>Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- Expenses Tab -->
+            <div id="expenses" class="tab-content">
+                <h3>Expense Records</h3>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                    <h4>Add New Expense</h4>
+                    <div class="form-group">
+                        <label>Reason for Expense</label>
+                        <input type="text" id="expenseReason" placeholder="e.g., Transport, Lunch, Supplies...">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (₦)</label>
+                        <input type="number" id="expenseAmount" placeholder="0.00">
+                    </div>
+                    <button onclick="addExpense()" class="success">Add Expense</button>
+                </div>
+
+                <div class="summary-box">
+                    <h4>Today's Expense Summary</h4>
+                    <p><strong>Total Expenses: ₦<span id="dailyExpenseTotal">0</span></strong></p>
+                </div>
+
+                <h4>Today's Expenses</h4>
+                <table id="expensesTable">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Reason</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- Reports Tab -->
+            <div id="reports" class="tab-content">
+                <h3>Reports</h3>
+                <button onclick="downloadStockReport()">Download Stock Report</button>
+                <button onclick="downloadSalesReport()">Download Sales Report</button>
+                <button onclick="downloadCreditReport()">Download Credit Report</button>
+                <button onclick="downloadGoodsToOrderReport()">Download Goods to Order Report</button>
+                <button onclick="downloadGoodsFromMarketReport()">Download Goods from Market Report</button>
+                <button onclick="downloadGoodsToMarketReport()">Download Goods to Market Report</button>
+                <button onclick="downloadExpensesReport()">Download Expenses Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google Sheets Configuration
+        const SHEET_ID = '1OwPvpqcenv_bdpPwhp24Dm5UYBOZuI_4Febl-e_czhQ';
+        const API_KEY = 'AIzaSyBhM6wK2JxSrIowy-2Qo7YMRd8nOTYfL7c';
+        
+        // Data storage with Google Sheets sync
+        let products = [];
+        let sales = [];
+        let credits = [];
+        let goodsToMarket = [];
+        let goodsFromMarket = [];
+        let expenses = [];
+        let manualOrders = [];
+        let editingProductId = null;
+        let lastSyncTime = null;
+        let isSyncing = false;
+
+        // Login System
+        const validUsers = {
+            'MSTboss': 'gbenga8989',
+            'MSTsecretary': 'loginSec8989'
+        };
+
+        // Google Sheets API functions
+        async function loadAllData() {
+            try {
+                updateSyncStatus('syncing', '🟡 Syncing...');
+                
+                // Load all data from Google Sheets
+                const [
+                    productsData, 
+                    salesData, 
+                    creditsData, 
+                    goodsToMarketData, 
+                    goodsFromMarketData, 
+                    expensesData, 
+                    manualOrdersData
+                ] = await Promise.all([
+                    loadSheetData('Products'),
+                    loadSheetData('Sales'),
+                    loadSheetData('Credits'),
+                    loadSheetData('GoodsToMarket'),
+                    loadSheetData('GoodsFromMarket'),
+                    loadSheetData('Expenses'),
+                    loadSheetData('ManualOrders')
+                ]);
+
+                // Parse the data
+                products = productsData ? parseSheetData(productsData) : [];
+                sales = salesData ? parseSheetData(salesData) : [];
+                credits = creditsData ? parseSheetData(creditsData) : [];
+                goodsToMarket = goodsToMarketData ? parseSheetData(goodsToMarketData) : [];
+                goodsFromMarket = goodsFromMarketData ? parseSheetData(goodsFromMarketData) : [];
+                expenses = expensesData ? parseSheetData(expensesData) : [];
+                manualOrders = manualOrdersData ? parseSheetData(manualOrdersData) : [];
+
+                lastSyncTime = new Date();
+                updateSyncStatus('online', '🟢 Synced');
+                updateLastSyncTime();
+                
+                // Update UI
+                updateDashboard();
+                displayProducts();
+                displaySales();
+                displayCredits();
+                displayGoodsToMarket();
+                displayGoodsFromMarket();
+                displayExpenses();
+                displayGoodsToOrder();
+                checkLowStock();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                updateSyncStatus('offline', '🔴 Sync Failed');
+                // Fallback to local storage if available
+                loadFromLocalStorage();
+            }
+        }
+
+        async function loadSheetData(sheetName) {
+            try {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${sheetName}?key=${API_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                return data.values;
+            } catch (error) {
+                console.warn(`Could not load ${sheetName}:`, error);
+                return null;
+            }
+        }
+
+        function parseSheetData(sheetData) {
+            if (!sheetData || sheetData.length < 2) return [];
+            
+            const headers = sheetData[0];
+            const rows = sheetData.slice(1);
+            
+            return rows.map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = row[index] || '';
+                });
+                return obj;
+            });
+        }
+
+        async function saveAllData() {
+            if (isSyncing) return;
+            isSyncing = true;
+            
+            try {
+                updateSyncStatus('syncing', '🟡 Saving...');
+                
+                await Promise.all([
+                    saveSheetData('Products', products, ['id', 'name', 'category', 'cost', 'price', 'stock', 'minStock']),
+                    saveSheetData('Sales', sales, ['id', 'productName', 'quantity', 'price', 'total', 'customer', 'paymentMethod', 'timestamp', 'date']),
+                    saveSheetData('Credits', credits, ['id', 'customer', 'phone', 'productName', 'quantity', 'amount', 'date', 'timestamp', 'status']),
+                    saveSheetData('GoodsToMarket', goodsToMarket, ['id', 'productId', 'productName', 'quantity', 'destination', 'date', 'notes', 'timestamp']),
+                    saveSheetData('GoodsFromMarket', goodsFromMarket, ['id', 'productName', 'category', 'supplier', 'quantity', 'date', 'notes', 'timestamp']),
+                    saveSheetData('Expenses', expenses, ['id', 'reason', 'amount', 'timestamp', 'date']),
+                    saveSheetData('ManualOrders', manualOrders, ['id', 'productId', 'productName', 'quantity', 'supplier', 'notes', 'dateAdded', 'status'])
+                ]);
+
+                lastSyncTime = new Date();
+                updateSyncStatus('online', '🟢 Synced');
+                updateLastSyncTime();
+                
+            } catch (error) {
+                console.error('Error saving data:', error);
+                updateSyncStatus('offline', '🔴 Save Failed');
+                // Save to local storage as backup
+                saveToLocalStorage();
+            } finally {
+                isSyncing = false;
+            }
+        }
+
+        async function saveSheetData(sheetName, data, headers) {
+            try {
+                const values = [
+                    headers,
+                    ...data.map(item => headers.map(header => item[header] || ''))
+                ];
+
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${sheetName}?valueInputOption=RAW&key=${API_KEY}`;
+                
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        values: values
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error(`Error saving ${sheetName}:`, error);
+                throw error;
+            }
+        }
+
+        function updateSyncStatus(status, message) {
+            const syncElement = document.getElementById('syncStatus');
+            if (syncElement) {
+                syncElement.textContent = message;
+                syncElement.className = `sync-status sync-${status}`;
+            }
+        }
+
+        function updateLastSyncTime() {
+            const lastSyncElement = document.getElementById('lastSync');
+            if (lastSyncElement && lastSyncTime) {
+                lastSyncElement.textContent = `Last sync: ${lastSyncTime.toLocaleTimeString()}`;
+            }
+        }
+
+        // Local storage fallback
+        function saveToLocalStorage() {
+            localStorage.setItem('products_backup', JSON.stringify(products));
+            localStorage.setItem('sales_backup', JSON.stringify(sales));
+            localStorage.setItem('credits_backup', JSON.stringify(credits));
+            localStorage.setItem('goodsToMarket_backup', JSON.stringify(goodsToMarket));
+            localStorage.setItem('goodsFromMarket_backup', JSON.stringify(goodsFromMarket));
+            localStorage.setItem('expenses_backup', JSON.stringify(expenses));
+            localStorage.setItem('manualOrders_backup', JSON.stringify(manualOrders));
+        }
+
+        function loadFromLocalStorage() {
+            products = JSON.parse(localStorage.getItem('products_backup')) || [];
+            sales = JSON.parse(localStorage.getItem('sales_backup')) || [];
+            credits = JSON.parse(localStorage.getItem('credits_backup')) || [];
+            goodsToMarket = JSON.parse(localStorage.getItem('goodsToMarket_backup')) || [];
+            goodsFromMarket = JSON.parse(localStorage.getItem('goodsFromMarket_backup')) || [];
+            expenses = JSON.parse(localStorage.getItem('expenses_backup')) || [];
+            manualOrders = JSON.parse(localStorage.getItem('manualOrders_backup')) || [];
+        }
+
+        // Auto-sync every 30 seconds
+        function startAutoSync() {
+            setInterval(async () => {
+                if (!isSyncing) {
+                    await loadAllData();
+                }
+            }, 30000);
+        }
+
+        // Login functions
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            if (validUsers[username] && validUsers[username] === password) {
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('currentUser', username);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                await initApp();
+            } else {
+                errorMessage.style.display = 'block';
+                document.getElementById('password').value = '';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('loggedIn');
+            localStorage.removeItem('currentUser');
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        async function initApp() {
+            await loadAllData();
+            startAutoSync();
+        }
+
+        // Check login status on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (localStorage.getItem('loggedIn') === 'true') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                await initApp();
+            }
+        });
+
+        // Handle Enter key in login form
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            
+            if (tabName === 'dashboard') {
+                updateDashboard();
+            } else if (tabName === 'credits') {
+                displayCredits();
+            } else if (tabName === 'goodsToOrder') {
+                displayGoodsToOrder();
+            } else if (tabName === 'goodsFromMarket') {
+                displayGoodsFromMarket();
+            } else if (tabName === 'goodsToMarket') {
+                displayGoodsToMarket();
+            } else if (tabName === 'expenses') {
+                displayExpenses();
+            }
+        }
+                // Product management
+        function showProductForm() {
+            document.getElementById('productForm').style.display = 'block';
+        }
+
+        function hideProductForm() {
+            document.getElementById('productForm').style.display = 'none';
+            editingProductId = null;
+            resetProductForm();
+        }
+
+        function resetProductForm() {
+            document.getElementById('productName').value = '';
+            document.getElementById('productCategory').value = '';
+            document.getElementById('productCost').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productStock').value = '';
+            document.getElementById('productMinStock').value = '5';
+        }
+
+        async function saveProduct() {
+            const product = {
+                id: editingProductId || Date.now().toString(),
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                cost: parseFloat(document.getElementById('productCost').value) || 0,
+                price: parseFloat(document.getElementById('productPrice').value) || 0,
+                stock: parseInt(document.getElementById('productStock').value) || 0,
+                minStock: parseInt(document.getElementById('productMinStock').value) || 5
+            };
+
+            if (!product.name) {
+                alert('Please enter product name');
+                return;
+            }
+
+            if (editingProductId) {
+                const index = products.findIndex(p => p.id === editingProductId);
+                products[index] = product;
+            } else {
+                products.push(product);
+            }
+
+            await saveAllData(); // Save to cloud
+            displayProducts();
+            hideProductForm();
+            updateDashboard();
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (product) {
+                editingProductId = id;
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productCategory').value = product.category;
+                document.getElementById('productCost').value = product.cost;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productStock').value = product.stock;
+                document.getElementById('productMinStock').value = product.minStock;
+                showProductForm();
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                products = products.filter(p => p.id !== id);
+                await saveAllData(); // Save to cloud
+                displayProducts();
+                updateDashboard();
+            }
+        }
+
+        function displayProducts() {
+            const tbody = document.querySelector('#productsTable tbody');
+            tbody.innerHTML = '';
+            
+            products.forEach(product => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>${product.category}</td>
+                    <td>₦${product.cost.toLocaleString()}</td>
+                    <td>₦${product.price.toLocaleString()}</td>
+                    <td class="${product.stock <= product.minStock ? 'low-stock' : ''}">${product.stock}</td>
+                    <td>
+                        <button onclick="editProduct('${product.id}')">Edit</button>
+                        <button onclick="deleteProduct('${product.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        function searchProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#productsTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        function filterProductsByCategory() {
+            const category = document.getElementById('categoryFilter').value;
+            const rows = document.querySelectorAll('#productsTable tbody tr');
+            
+            rows.forEach(row => {
+                const productCategory = row.cells[1].textContent;
+                if (!category || productCategory === category) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Bulk import functions
+        function showImportForm() {
+            document.getElementById('importForm').style.display = 'block';
+        }
+
+        function hideImportForm() {
+            document.getElementById('importForm').style.display = 'none';
+            document.getElementById('csvData').value = '';
+            document.getElementById('csvFile').value = '';
+        }
+
+        async function importProducts() {
+            const csvData = document.getElementById('csvData').value;
+            const fileInput = document.getElementById('csvFile');
+            
+            if (!csvData && !fileInput.files[0]) {
+                alert('Please paste CSV data or select a CSV file');
+                return;
+            }
+            
+            let importData = csvData;
+            
+            if (fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    importData = e.target.result;
+                    processCSVData(importData);
+                };
+                reader.readAsText(fileInput.files[0]);
+            } else {
+                processCSVData(importData);
+            }
+        }
+
+        async function processCSVData(csvData) {
+            const lines = csvData.split('\n');
+            let importedCount = 0;
+            let errorCount = 0;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line || i === 0) continue; // Skip empty lines and header
+                
+                const parts = line.split(',').map(part => part.trim());
+                
+                if (parts.length >= 5) {
+                    try {
+                        const product = {
+                            id: Date.now().toString() + i,
+                            name: parts[0] || '',
+                            category: parts[1] || 'General Computer Accessories',
+                            cost: parseFloat(parts[2]) || 0,
+                            price: parseFloat(parts[3]) || 0,
+                            stock: parseInt(parts[4]) || 0,
+                            minStock: parseInt(parts[5]) || 5
+                        };
+                        
+                        if (product.name) {
+                            products.push(product);
+                            importedCount++;
+                        }
+                    } catch (error) {
+                        errorCount++;
+                        console.error('Error importing product:', error);
+                    }
+                }
+            }
+            
+            if (importedCount > 0) {
+                await saveAllData(); // Save to cloud
+                displayProducts();
+                updateDashboard();
+                hideImportForm();
+                alert(`Successfully imported ${importedCount} products!${errorCount > 0 ? ` (${errorCount} errors)` : ''}`);
+            } else {
+                alert('No products were imported. Please check your CSV format.');
+            }
+        }
+
+        function downloadTemplate() {
+            const template = `Name,Category,Cost,Price,Stock,MinStock
+HP Laptop 15s,Laptops,150000,180000,10,5
+USB-C Cable,General Computer Accessories,500,800,50,10
+iPhone Charger,Chargers,1200,1500,25,5
+Laptop Bag,General Computer Accessories,3000,4000,15,3
+HDMI Cable,General Computer Accessories,800,1200,30,5`;
+            
+            const blob = new Blob([template], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'product-import-template.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Sales management
+        function searchSaleProducts() {
+            const searchTerm = document.getElementById('saleSearch').value.toLowerCase();
+            const list = document.getElementById('saleProductsList');
+            list.innerHTML = '';
+            
+            if (searchTerm.length < 2) return;
+            
+            const filtered = products.filter(p => 
+                p.name.toLowerCase().includes(searchTerm)
+            );
+            
+            filtered.forEach(product => {
+                const div = document.createElement('div');
+                div.style.padding = '8px';
+                div.style.borderBottom = '1px solid #eee';
+                div.style.cursor = 'pointer';
+                div.innerHTML = `
+                    <strong>${product.name}</strong> - Stock: ${product.stock} - Price: ₦${product.price}
+                `;
+                div.onclick = () => selectProductForSale(product);
+                list.appendChild(div);
+            });
+        }
+
+        function selectProductForSale(product) {
+            document.getElementById('saleSearch').value = product.name;
+            document.getElementById('salePrice').value = product.price;
+            document.getElementById('saleProductsList').innerHTML = '';
+        }
+
+        function togglePhoneNumber() {
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const phoneGroup = document.getElementById('phoneNumberGroup');
+            
+            if (paymentMethod === 'credit') {
+                phoneGroup.style.display = 'block';
+            } else {
+                phoneGroup.style.display = 'none';
+                document.getElementById('saleCustomerPhone').value = '';
+            }
+        }
+
+        async function addSaleItem() {
+            const productName = document.getElementById('saleSearch').value;
+            const quantity = parseInt(document.getElementById('saleQuantity').value) || 1;
+            const price = parseFloat(document.getElementById('salePrice').value) || 0;
+            const customer = document.getElementById('saleCustomer').value || 'Walk-in';
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const customerPhone = document.getElementById('saleCustomerPhone').value;
+            
+            if (!productName) {
+                alert('Please select a product');
+                return;
+            }
+            
+            if (price <= 0) {
+                alert('Please enter a valid price');
+                return;
+            }
+
+            if (!paymentMethod) {
+                alert('Please select payment method');
+                return;
+            }
+            
+            if (paymentMethod === 'credit' && !customerPhone) {
+                alert('Please enter customer phone number for credit sales');
+                return;
+            }
+            
+            const sale = {
+                id: Date.now().toString(),
+                productName,
+                quantity,
+                price,
+                total: quantity * price,
+                customer,
+                paymentMethod: paymentMethod,
+                timestamp: new Date().toLocaleString(),
+                date: new Date().toISOString().split('T')[0]
+            };
+            
+            sales.push(sale);
+            
+            // If it's a credit sale, add to credits
+            if (paymentMethod === 'credit') {
+                const credit = {
+                    id: sale.id,
+                    customer: customer,
+                    phone: customerPhone,
+                    productName: productName,
+                    quantity: quantity,
+                    amount: sale.total,
+                    date: sale.date,
+                    timestamp: sale.timestamp,
+                    status: 'pending'
+                };
+                credits.push(credit);
+            }
+            
+            // Update product stock
+            const product = products.find(p => p.name === productName);
+            if (product) {
+                product.stock -= quantity;
+            }
+            
+            await saveAllData(); // Save to cloud
+            displaySales();
+            updateDashboard();
+            resetSaleForm();
+        }
+
+        function resetSaleForm() {
+            document.getElementById('saleSearch').value = '';
+            document.getElementById('saleQuantity').value = '1';
+            document.getElementById('salePrice').value = '';
+            document.getElementById('saleCustomer').value = '';
+            document.getElementById('saleCustomerPhone').value = '';
+            document.getElementById('paymentMethod').value = '';
+            document.getElementById('phoneNumberGroup').style.display = 'none';
+            document.getElementById('saleProductsList').innerHTML = '';
+        }
+
+        function displaySales() {
+            const tbody = document.querySelector('#salesTable tbody');
+            tbody.innerHTML = '';
+            
+            const today = new Date().toDateString();
+            const todaySales = sales.filter(sale => new Date(sale.timestamp).toDateString() === today);
+            
+            todaySales.forEach(sale => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${sale.timestamp}</td>
+                    <td>${sale.productName}</td>
+                    <td>${sale.quantity}</td>
+                    <td>₦${sale.price.toLocaleString()}</td>
+                    <td>₦${sale.total.toLocaleString()}</td>
+                    <td>${sale.customer}</td>
+                    <td>${sale.paymentMethod}</td>
+                    <td>
+                        <button onclick="deleteSale('${sale.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        async function deleteSale(saleId) {
+            if (confirm('Are you sure you want to delete this sale?')) {
+                const sale = sales.find(s => s.id === saleId);
+                
+                if (sale) {
+                    // Restore product stock
+                    const product = products.find(p => p.name === sale.productName);
+                    if (product) {
+                        product.stock += sale.quantity;
+                    }
+                    
+                    // Remove from credits if it was a credit sale
+                    if (sale.paymentMethod === 'credit') {
+                        credits = credits.filter(c => c.id !== saleId);
+                    }
+                    
+                    // Remove the sale
+                    sales = sales.filter(s => s.id !== saleId);
+                    
+                    await saveAllData(); // Save to cloud
+                    displaySales();
+                    updateDashboard();
+                    alert('Sale deleted successfully!');
+                }
+            }
+        }
+
+        // Credit management
+        function displayCredits() {
+            const tbody = document.querySelector('#creditsTable tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            const pendingCredits = credits.filter(credit => credit.status === 'pending');
+            
+            if (pendingCredits.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">No pending credits</td></tr>';
+                return;
+            }
+            
+            pendingCredits.forEach(credit => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${credit.date}</td>
+                    <td>${credit.customer}</td>
+                    <td>${credit.phone}</td>
+                    <td>${credit.productName}</td>
+                    <td>${credit.quantity}</td>
+                    <td>₦${credit.amount.toLocaleString()}</td>
+                    <td>${credit.timestamp}</td>
+                    <td>
+                        <button onclick="markCreditPaid('${credit.id}')" class="success">Mark Paid</button>
+                        <button onclick="deleteCredit('${credit.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        async function markCreditPaid(creditId) {
+            const credit = credits.find(c => c.id === creditId);
+            if (credit) {
+                credit.status = 'paid';
+                await saveAllData(); // Save to cloud
+                displayCredits();
+                updateDashboard();
+                alert('Credit marked as paid!');
+            }
+        }
+
+        async function deleteCredit(creditId) {
+            if (confirm('Are you sure you want to delete this credit record?')) {
+                credits = credits.filter(c => c.id !== creditId);
+                await saveAllData(); // Save to cloud
+                displayCredits();
+                updateDashboard();
+            }
+        }
+                // Goods to Order functions
+        function displayGoodsToOrder() {
+            displayAutoGoodsToOrder();
+            displayManualGoodsToOrder();
+            populateManualOrderProducts();
+        }
+
+        function displayAutoGoodsToOrder() {
+            const tbody = document.querySelector('#autoGoodsToOrderTable tbody');
+            tbody.innerHTML = '';
+            
+            const reorderItems = products.filter(p => p.stock <= p.minStock);
+            
+            if (reorderItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">All products are sufficiently stocked</td></tr>';
+                return;
+            }
+            
+            reorderItems.forEach(product => {
+                const row = tbody.insertRow();
+                const needToOrder = product.minStock - product.stock;
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td class="low-stock">${product.stock}</td>
+                    <td>${product.minStock}</td>
+                    <td class="low-stock">${needToOrder}</td>
+                    <td><input type="text" id="supplier-${product.id}" placeholder="Supplier name" style="padding: 5px; width: 120px;"></td>
+                    <td>
+                        <button onclick="orderProduct('${product.id}')" class="success">Mark Ordered</button>
+                    </td>
+                `;
+            });
+        }
+
+        function displayManualGoodsToOrder() {
+            const tbody = document.querySelector('#manualGoodsToOrderTable tbody');
+            tbody.innerHTML = '';
+            
+            if (manualOrders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No manual orders added</td></tr>';
+                return;
+            }
+            
+            manualOrders.forEach(order => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${order.productName}</td>
+                    <td>${order.quantity}</td>
+                    <td>${order.supplier}</td>
+                    <td>${order.notes || '-'}</td>
+                    <td>${order.dateAdded}</td>
+                    <td>${order.status}</td>
+                    <td>
+                        <button onclick="markManualOrderReceived('${order.id}')" class="success">Mark Received</button>
+                        <button onclick="deleteManualOrder('${order.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        function populateManualOrderProducts() {
+            const select = document.getElementById('manualOrderProduct');
+            select.innerHTML = '<option value="">Select Product</option>';
+            
+            products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = product.name;
+                select.appendChild(option);
+            });
+        }
+
+        async function addManualOrder() {
+            const productId = document.getElementById('manualOrderProduct').value;
+            const quantity = parseInt(document.getElementById('manualOrderQuantity').value) || 0;
+            const supplier = document.getElementById('manualOrderSupplier').value;
+            const notes = document.getElementById('manualOrderNotes').value;
+            
+            if (!productId) {
+                alert('Please select a product');
+                return;
+            }
+            
+            if (quantity <= 0) {
+                alert('Please enter a valid quantity');
+                return;
+            }
+            
+            if (!supplier) {
+                alert('Please enter supplier name');
+                return;
+            }
+            
+            const product = products.find(p => p.id === productId);
+            
+            const manualOrder = {
+                id: Date.now().toString(),
+                productId: productId,
+                productName: product.name,
+                quantity: quantity,
+                supplier: supplier,
+                notes: notes,
+                dateAdded: new Date().toISOString().split('T')[0],
+                status: 'pending'
+            };
+            
+            manualOrders.push(manualOrder);
+            await saveAllData(); // Save to cloud
+            
+            displayManualGoodsToOrder();
+            resetManualOrderForm();
+            alert('Manual order added successfully!');
+        }
+
+        function resetManualOrderForm() {
+            document.getElementById('manualOrderProduct').value = '';
+            document.getElementById('manualOrderQuantity').value = '';
+            document.getElementById('manualOrderSupplier').value = '';
+            document.getElementById('manualOrderNotes').value = '';
+        }
+
+        async function markManualOrderReceived(orderId) {
+            const order = manualOrders.find(o => o.id === orderId);
+            if (order) {
+                order.status = 'received';
+                await saveAllData(); // Save to cloud
+                displayManualGoodsToOrder();
+                alert('Order marked as received!');
+            }
+        }
+
+        async function deleteManualOrder(orderId) {
+            if (confirm('Are you sure you want to delete this manual order?')) {
+                manualOrders = manualOrders.filter(o => o.id !== orderId);
+                await saveAllData(); // Save to cloud
+                displayManualGoodsToOrder();
+            }
+        }
+
+        function orderProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            const supplierInput = document.getElementById(`supplier-${productId}`);
+            const supplier = supplierInput.value.trim();
+            
+            if (!supplier) {
+                alert('Please enter supplier name');
+                return;
+            }
+            
+            if (confirm(`Mark ${product.name} as ordered from ${supplier}?`)) {
+                alert(`${product.name} marked as ordered from ${supplier}`);
+                supplierInput.value = '';
+                displayAutoGoodsToOrder();
+            }
+        }
+
+        function downloadGoodsToOrderReport() {
+            const reorderItems = products.filter(p => p.stock <= p.minStock);
+            
+            if (reorderItems.length === 0 && manualOrders.length === 0) {
+                alert('No goods need to be ordered');
+                return;
+            }
+            
+            let csv = 'Type,Product,Quantity,Supplier,Notes,Status\n';
+            
+            // Add automatic orders
+            reorderItems.forEach(product => {
+                const needToOrder = product.minStock - product.stock;
+                csv += `Auto,"${product.name}",${needToOrder},,"Low stock item","pending"\n`;
+            });
+            
+            // Add manual orders
+            manualOrders.forEach(order => {
+                csv += `Manual,"${order.productName}",${order.quantity},"${order.supplier}","${order.notes || ''}","${order.status}"\n`;
+            });
+            
+            downloadCSV(csv, 'goods-to-order-report.csv');
+        }
+
+        // Goods from Market functions
+        function showGoodsFromMarketForm() {
+            document.getElementById('goodsFromMarketForm').style.display = 'block';
+            // Set default date to today
+            document.getElementById('receivedDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        function hideGoodsFromMarketForm() {
+            document.getElementById('goodsFromMarketForm').style.display = 'none';
+            resetGoodsFromMarketForm();
+        }
+
+        function resetGoodsFromMarketForm() {
+            document.getElementById('receivedProductName').value = '';
+            document.getElementById('receivedProductCategory').value = '';
+            document.getElementById('receivedSupplier').value = '';
+            document.getElementById('receivedQuantity').value = '';
+            document.getElementById('receivedDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('receivedNotes').value = '';
+        }
+
+        async function saveGoodsFromMarket() {
+            const productName = document.getElementById('receivedProductName').value;
+            const category = document.getElementById('receivedProductCategory').value;
+            const supplier = document.getElementById('receivedSupplier').value;
+            const quantity = parseInt(document.getElementById('receivedQuantity').value) || 0;
+            const date = document.getElementById('receivedDate').value;
+            const notes = document.getElementById('receivedNotes').value;
+            
+            if (!productName) {
+                alert('Please enter product name');
+                return;
+            }
+            
+            if (!category) {
+                alert('Please select category');
+                return;
+            }
+            
+            if (!supplier) {
+                alert('Please enter supplier name');
+                return;
+            }
+            
+            if (quantity <= 0) {
+                alert('Please enter a valid quantity');
+                return;
+            }
+            
+            // Check if product already exists
+            let product = products.find(p => p.name.toLowerCase() === productName.toLowerCase() && p.category === category);
+            
+            if (product) {
+                // Update existing product stock
+                product.stock += quantity;
+            } else {
+                // Create new product
+                product = {
+                    id: Date.now().toString(),
+                    name: productName,
+                    category: category,
+                    cost: 0, // Will be set later
+                    price: 0, // Will be set later
+                    stock: quantity,
+                    minStock: 5
+                };
+                products.push(product);
+            }
+            
+            const goodsEntry = {
+                id: Date.now().toString(),
+                productName: productName,
+                category: category,
+                supplier: supplier,
+                quantity: quantity,
+                date: date,
+                notes: notes,
+                timestamp: new Date().toLocaleString()
+            };
+            
+            goodsFromMarket.push(goodsEntry);
+            await saveAllData(); // Save to cloud
+            
+            displayGoodsFromMarket();
+            hideGoodsFromMarketForm();
+            updateDashboard();
+            displayProducts();
+            alert(`Goods received recorded successfully! ${productName} added to ${category} category.`);
+        }
+
+        function displayGoodsFromMarket() {
+            const tbody = document.querySelector('#goodsFromMarketTable tbody');
+            tbody.innerHTML = '';
+            
+            if (goodsFromMarket.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No goods received recorded</td></tr>';
+                return;
+            }
+            
+            // Sort by date (newest first)
+            const sortedGoods = goodsFromMarket.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedGoods.forEach(entry => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.category}</td>
+                    <td>${entry.quantity}</td>
+                    <td>${entry.supplier}</td>
+                    <td>${entry.notes || '-'}</td>
+                    <td>
+                        <button onclick="deleteGoodsFromMarket('${entry.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        function filterGoodsFromMarket() {
+            const fromDate = document.getElementById('filterFromDateReceived').value;
+            const toDate = document.getElementById('filterToDateReceived').value;
+            const tbody = document.querySelector('#goodsFromMarketTable tbody');
+            tbody.innerHTML = '';
+            
+            let filteredGoods = goodsFromMarket;
+            
+            if (fromDate) {
+                filteredGoods = filteredGoods.filter(entry => entry.date >= fromDate);
+            }
+            
+            if (toDate) {
+                filteredGoods = filteredGoods.filter(entry => entry.date <= toDate);
+            }
+            
+            if (filteredGoods.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No records found for the selected date range</td></tr>';
+                return;
+            }
+            
+            // Sort by date (newest first)
+            const sortedGoods = filteredGoods.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedGoods.forEach(entry => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.category}</td>
+                    <td>${entry.quantity}</td>
+                    <td>${entry.supplier}</td>
+                    <td>${entry.notes || '-'}</td>
+                    <td>
+                        <button onclick="deleteGoodsFromMarket('${entry.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        function clearGoodsFromMarketFilter() {
+            document.getElementById('filterFromDateReceived').value = '';
+            document.getElementById('filterToDateReceived').value = '';
+            displayGoodsFromMarket();
+        }
+
+        async function deleteGoodsFromMarket(entryId) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                const entry = goodsFromMarket.find(g => g.id === entryId);
+                
+                // Reduce product stock if needed
+                const product = products.find(p => p.name === entry.productName && p.category === entry.category);
+                if (product) {
+                    product.stock = Math.max(0, product.stock - entry.quantity);
+                }
+                
+                goodsFromMarket = goodsFromMarket.filter(g => g.id !== entryId);
+                await saveAllData(); // Save to cloud
+                
+                displayGoodsFromMarket();
+                updateDashboard();
+            }
+        }
+
+        function downloadGoodsFromMarketReport() {
+            if (goodsFromMarket.length === 0) {
+                alert('No goods received recorded');
+                return;
+            }
+            
+            let csv = 'Date,Product,Category,Quantity,Supplier,Notes\n';
+            
+            goodsFromMarket.forEach(entry => {
+                csv += `"${entry.date}","${entry.productName}","${entry.category}",${entry.quantity},"${entry.supplier}","${entry.notes || ''}"\n`;
+            });
+            
+            downloadCSV(csv, 'goods-from-market-report.csv');
+        }
+
+        // Goods to Market functions
+        function showGoodsToMarketForm() {
+            document.getElementById('goodsToMarketForm').style.display = 'block';
+            populateMarketProducts();
+            // Set default date to today
+            document.getElementById('marketDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        function hideGoodsToMarketForm() {
+            document.getElementById('goodsToMarketForm').style.display = 'none';
+            resetGoodsToMarketForm();
+        }
+
+        function resetGoodsToMarketForm() {
+            document.getElementById('marketProduct').value = '';
+            document.getElementById('marketQuantity').value = '';
+            document.getElementById('marketDestination').value = '';
+            document.getElementById('marketDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('marketNotes').value = '';
+        }
+
+        function populateMarketProducts() {
+            const select = document.getElementById('marketProduct');
+            select.innerHTML = '<option value="">Select Product</option>';
+            
+            products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = `${product.name} (Stock: ${product.stock})`;
+                select.appendChild(option);
+            });
+        }
+
+        async function saveGoodsToMarket() {
+            const productId = document.getElementById('marketProduct').value;
+            const quantity = parseInt(document.getElementById('marketQuantity').value) || 0;
+            const destination = document.getElementById('marketDestination').value;
+            const date = document.getElementById('marketDate').value;
+            const notes = document.getElementById('marketNotes').value;
+            
+            if (!productId) {
+                alert('Please select a product');
+                return;
+            }
+            
+            if (quantity <= 0) {
+                alert('Please enter a valid quantity');
+                return;
+            }
+            
+            if (!destination) {
+                alert('Please enter destination/market');
+                return;
+            }
+            
+            const product = products.find(p => p.id === productId);
+            
+            // Check if we have enough stock
+            if (product.stock < quantity) {
+                alert(`Not enough stock! Only ${product.stock} available.`);
+                return;
+            }
+            
+            const goodsEntry = {
+                id: Date.now().toString(),
+                productId: productId,
+                productName: product.name,
+                quantity: quantity,
+                destination: destination,
+                date: date,
+                notes: notes,
+                timestamp: new Date().toLocaleString()
+            };
+            
+            goodsToMarket.push(goodsEntry);
+            
+            // Update product stock
+            product.stock -= quantity;
+            
+            await saveAllData(); // Save to cloud
+            displayGoodsToMarket();
+            hideGoodsToMarketForm();
+            updateDashboard();
+            alert(`Goods sent to market recorded successfully!`);
+        }
+
+        function displayGoodsToMarket() {
+            const tbody = document.querySelector('#goodsToMarketTable tbody');
+            tbody.innerHTML = '';
+            
+            if (goodsToMarket.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No goods sent to market recorded</td></tr>';
+                return;
+            }
+            
+            // Sort by date (newest first)
+            const sortedGoods = goodsToMarket.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedGoods.forEach(entry => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.quantity}</td>
+                    <td>${entry.destination}</td>
+                    <td>${entry.notes || '-'}</td>
+                    <td>
+                        <button onclick="deleteGoodsToMarket('${entry.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        function filterGoodsToMarket() {
+            const fromDate = document.getElementById('filterFromDate').value;
+            const toDate = document.getElementById('filterToDate').value;
+            const tbody = document.querySelector('#goodsToMarketTable tbody');
+            tbody.innerHTML = '';
+            
+            let filteredGoods = goodsToMarket;
+            
+            if (fromDate) {
+                filteredGoods = filteredGoods.filter(entry => entry.date >= fromDate);
+            }
+            
+            if (toDate) {
+                filteredGoods = filteredGoods.filter(entry => entry.date <= toDate);
+            }
+            
+            if (filteredGoods.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No records found for the selected date range</td></tr>';
+                return;
+            }
+            
+            // Sort by date (newest first)
+            const sortedGoods = filteredGoods.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedGoods.forEach(entry => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.quantity}</td>
+                    <td>${entry.destination}</td>
+                    <td>${entry.notes || '-'}</td>
+                    <td>
+                        <button onclick="deleteGoodsToMarket('${entry.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        function clearGoodsFilter() {
+            document.getElementById('filterFromDate').value = '';
+            document.getElementById('filterToDate').value = '';
+            displayGoodsToMarket();
+        }
+
+        async function deleteGoodsToMarket(entryId) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                const entry = goodsToMarket.find(g => g.id === entryId);
+                
+                // Restore stock if needed
+                const product = products.find(p => p.id === entry.productId);
+                if (product) {
+                    product.stock += entry.quantity;
+                }
+                
+                goodsToMarket = goodsToMarket.filter(g => g.id !== entryId);
+                await saveAllData(); // Save to cloud
+                
+                displayGoodsToMarket();
+                updateDashboard();
+            }
+        }
+
+        function downloadGoodsToMarketReport() {
+            if (goodsToMarket.length === 0) {
+                alert('No goods sent to market recorded');
+                return;
+            }
+            
+            let csv = 'Date,Product,Quantity,Destination,Notes\n';
+            
+            goodsToMarket.forEach(entry => {
+                csv += `"${entry.date}","${entry.productName}",${entry.quantity},"${entry.destination}","${entry.notes || ''}"\n`;
+            });
+            
+            downloadCSV(csv, 'goods-to-market-report.csv');
+        }
+
+        // Expenses functions
+        async function addExpense() {
+            const reason = document.getElementById('expenseReason').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+            
+            if (!reason) {
+                alert('Please enter reason for expense');
+                return;
+            }
+            
+            if (amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            const expense = {
+                id: Date.now().toString(),
+                reason: reason,
+                amount: amount,
+                timestamp: new Date().toLocaleString(),
+                date: new Date().toISOString().split('T')[0]
+            };
+            
+            expenses.push(expense);
+            await saveAllData(); // Save to cloud
+            
+            displayExpenses();
+            updateDashboard();
+            resetExpenseForm();
+            alert('Expense recorded successfully!');
+        }
+
+        function resetExpenseForm() {
+            document.getElementById('expenseReason').value = '';
+            document.getElementById('expenseAmount').value = '';
+        }
+
+        function displayExpenses() {
+            const tbody = document.querySelector('#expensesTable tbody');
+            tbody.innerHTML = '';
+            
+            const today = new Date().toDateString();
+            const todayExpenses = expenses.filter(expense => new Date(expense.timestamp).toDateString() === today);
+            
+            if (todayExpenses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No expenses recorded today</td></tr>';
+                document.getElementById('dailyExpenseTotal').textContent = '0';
+                return;
+            }
+            
+            let dailyTotal = 0;
+            
+            todayExpenses.forEach(expense => {
+                dailyTotal += expense.amount;
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${expense.timestamp}</td>
+                    <td>${expense.reason}</td>
+                    <td>₦${expense.amount.toLocaleString()}</td>
+                    <td>
+                        <button onclick="deleteExpense('${expense.id}')" class="secondary">Delete</button>
+                    </td>
+                `;
+            });
+            
+            document.getElementById('dailyExpenseTotal').textContent = dailyTotal.toLocaleString();
+        }
+
+        async function deleteExpense(expenseId) {
+            if (confirm('Are you sure you want to delete this expense?')) {
+                expenses = expenses.filter(e => e.id !== expenseId);
+                await saveAllData(); // Save to cloud
+                
+                displayExpenses();
+                updateDashboard();
+                alert('Expense deleted successfully!');
+            }
+        }
+
+        function downloadExpensesReport() {
+            if (expenses.length === 0) {
+                alert('No expenses recorded');
+                return;
+            }
+            
+            let csv = 'Date,Reason,Amount,Time\n';
+            
+            expenses.forEach(expense => {
+                csv += `"${expense.date}","${expense.reason}",${expense.amount},"${expense.timestamp}"\n`;
+            });
+            
+            downloadCSV(csv, 'expenses-report.csv');
+        }
+                // Dashboard functions
+        function updateDashboard() {
+            const today = new Date().toDateString();
+            
+            // Calculate daily totals
+            const todaySales = sales.filter(sale => new Date(sale.timestamp).toDateString() === today);
+            const todayExpenses = expenses.filter(expense => new Date(expense.timestamp).toDateString() === today);
+            
+            // Total Sales (all payment methods)
+            const totalSales = todaySales.reduce((sum, sale) => sum + sale.total, 0);
+            
+            // Total Transfer
+            const totalTransfer = todaySales
+                .filter(sale => sale.paymentMethod === 'transfer')
+                .reduce((sum, sale) => sum + sale.total, 0);
+            
+            // Total POS
+            const totalPOS = todaySales
+                .filter(sale => sale.paymentMethod === 'pos')
+                .reduce((sum, sale) => sum + sale.total, 0);
+            
+            // Total Expenses
+            const totalExpenses = todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            
+            // Cash at Hand calculation
+            const cashAtHand = totalSales - totalTransfer - totalPOS - totalExpenses;
+            
+            // Update dashboard cards
+            document.getElementById('totalSales').textContent = `₦${totalSales.toLocaleString()}`;
+            document.getElementById('totalTransfer').textContent = `₦${totalTransfer.toLocaleString()}`;
+            document.getElementById('totalPOS').textContent = `₦${totalPOS.toLocaleString()}`;
+            document.getElementById('totalExpenses').textContent = `₦${totalExpenses.toLocaleString()}`;
+            
+            // Color code cash at hand
+            const cashElement = document.getElementById('cashAtHand');
+            cashElement.textContent = `₦${cashAtHand.toLocaleString()}`;
+            cashElement.className = cashAtHand >= 0 ? 'number cash-positive' : 'number cash-negative';
+            
+            // Pending credits
+            const pendingCreditsTotal = credits
+                .filter(credit => credit.status === 'pending')
+                .reduce((sum, credit) => sum + credit.amount, 0);
+            document.getElementById('pendingCredits').textContent = `₦${pendingCreditsTotal.toLocaleString()}`;
+            
+            // Update other sections
+            updateRecentGoods();
+            checkLowStock();
+        }
+
+        function updateRecentGoods() {
+            // Recent Goods from Market
+            const fromMarketTbody = document.querySelector('#recentGoodsFromMarketTable tbody');
+            fromMarketTbody.innerHTML = '';
+            
+            const recentGoodsFromMarket = goodsFromMarket
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+            
+            if (recentGoodsFromMarket.length === 0) {
+                fromMarketTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No recent goods received</td></tr>';
+            } else {
+                recentGoodsFromMarket.forEach(entry => {
+                    const row = fromMarketTbody.insertRow();
+                    row.innerHTML = `
+                        <td>${entry.date}</td>
+                        <td>${entry.productName}</td>
+                        <td>${entry.quantity}</td>
+                        <td>${entry.supplier}</td>
+                    `;
+                });
+            }
+
+            // Recent Goods to Market
+            const toMarketTbody = document.querySelector('#recentGoodsToMarketTable tbody');
+            toMarketTbody.innerHTML = '';
+            
+            const recentGoodsToMarket = goodsToMarket
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+            
+            if (recentGoodsToMarket.length === 0) {
+                toMarketTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No recent goods sent to market</td></tr>';
+            } else {
+                recentGoodsToMarket.forEach(entry => {
+                    const row = toMarketTbody.insertRow();
+                    row.innerHTML = `
+                        <td>${entry.date}</td>
+                        <td>${entry.productName}</td>
+                        <td>${entry.quantity}</td>
+                        <td>${entry.destination}</td>
+                    `;
+                });
+            }
+        }
+
+        function checkLowStock() {
+            const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
+            const alert = document.getElementById('lowStockAlert');
+            const alertCount = document.getElementById('alertCount');
+            
+            if (lowStockCount > 0) {
+                alert.style.display = 'block';
+                alertCount.textContent = lowStockCount;
+            } else {
+                alert.style.display = 'none';
+            }
+        }
+
+        // Report functions
+        function downloadStockReport() {
+            let csv = 'Product Name,Category,Cost Price,Selling Price,Current Stock,Min Stock,Stock Value\n';
+            
+            products.forEach(product => {
+                const stockValue = product.cost * product.stock;
+                csv += `"${product.name}","${product.category}",${product.cost},${product.price},${product.stock},${product.minStock},${stockValue}\n`;
+            });
+            
+            downloadCSV(csv, 'stock-report.csv');
+        }
+
+        function downloadSalesReport() {
+            const today = new Date().toLocaleDateString().replace(/\//g, '-');
+            let csv = 'Date,Product,Quantity,Unit Price,Total,Customer,Payment Method\n';
+            
+            sales.forEach(sale => {
+                csv += `"${sale.timestamp}","${sale.productName}",${sale.quantity},${sale.price},${sale.total},"${sale.customer}","${sale.paymentMethod}"\n`;
+            });
+            
+            downloadCSV(csv, `sales-report-${today}.csv`);
+        }
+
+        function downloadCreditReport() {
+            let csv = 'Date,Customer,Phone,Product,Quantity,Amount,Status\n';
+            
+            credits.forEach(credit => {
+                csv += `"${credit.date}","${credit.customer}","${credit.phone}","${credit.productName}",${credit.quantity},${credit.amount},"${credit.status}"\n`;
+            });
+            
+            downloadCSV(csv, 'credit-report.csv');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Initialize date fields
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default dates for filters
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterFromDate').value = today;
+            document.getElementById('filterToDate').value = today;
+            document.getElementById('filterFromDateReceived').value = today;
+            document.getElementById('filterToDateReceived').value = today;
+        });
+    </script>
+</body>
+</html>
