@@ -1231,8 +1231,31 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             document.getElementById('password').value = '';
             document.getElementById('errorMessage').style.display = 'none';
         }
-
-        async function initApp() {
+                // Test sync function
+        async function testSync() {
+            console.log('🔄 Testing Google Sheets sync...');
+            try {
+                const testUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Products?key=${API_KEY}`;
+                const response = await fetch(testUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Sync test PASSED - Sheet data:', data.values);
+                    updateSyncStatus('online', '🟢 Sync Working');
+                    return true;
+                } else {
+                    console.log('❌ Sync test FAILED - HTTP error:', response.status);
+                    updateSyncStatus('offline', '🔴 HTTP Error: ' + response.status);
+                    return false;
+                }
+            } catch (error) {
+                console.log('❌ Sync test FAILED - Network error:', error);
+                updateSyncStatus('offline', '🔴 Network Error');
+                return false;
+            }
+        }
+               async function initApp() {
+            await testSync();
             await loadAllData();
             startAutoSync();
         }
@@ -2544,4 +2567,5 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
         });
     </script>
 </body>
+
 </html>
