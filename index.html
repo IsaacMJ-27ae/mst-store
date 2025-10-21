@@ -991,13 +991,26 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             </div>
         </div>
     </div>
+        <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    <script>
-        // Google Sheets Configuration
-        const SHEET_ID = '1OwPvpqcenv_bdpPwhp24Dm5UYBOZuI_4Febl-e_czhQ';
-        const API_KEY = 'AIzaSyBhM6wK2JxSrIowy-2Qo7YMRd8nOTYfL7c';
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBLCSniALn9OAe_zmwUkdQuzcTPBsnwz00",
+            authDomain: "mst-store-management.firebaseapp.com",
+            projectId: "mst-store-management",
+            storageBucket: "mst-store-management.firebasestorage.app",
+            messagingSenderId: "1094134989055",
+            appId: "1:1094134989055:web:4ad75b94f2bfb139aaccca"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
         
-        // Data storage with Google Sheets sync
+        // Data storage
         let products = [];
         let sales = [];
         let credits = [];
@@ -1015,41 +1028,33 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             'MSTsecretary': 'loginSec8989'
         };
 
-        // Google Sheets API functions
+        // Firebase Database Functions - FIXED VERSION
         async function loadAllData() {
             try {
-                updateSyncStatus('syncing', '🟡 Syncing...');
+                updateSyncStatus('syncing', '🟡 Loading from Firebase...');
                 
-                // Load all data from Google Sheets
-                const [
-                    productsData, 
-                    salesData, 
-                    creditsData, 
-                    goodsToMarketData, 
-                    goodsFromMarketData, 
-                    expensesData, 
-                    manualOrdersData
-                ] = await Promise.all([
-                    loadSheetData('Products'),
-                    loadSheetData('Sales'),
-                    loadSheetData('Credits'),
-                    loadSheetData('GoodsToMarket'),
-                    loadSheetData('GoodsFromMarket'),
-                    loadSheetData('Expenses'),
-                    loadSheetData('ManualOrders')
+                // Load all data from Firebase
+                const collections = await Promise.all([
+                    getDocs(collection(db, 'products')),
+                    getDocs(collection(db, 'sales')),
+                    getDocs(collection(db, 'credits')),
+                    getDocs(collection(db, 'goodsToMarket')),
+                    getDocs(collection(db, 'goodsFromMarket')),
+                    getDocs(collection(db, 'expenses')),
+                    getDocs(collection(db, 'manualOrders'))
                 ]);
 
-                // Parse the data
-                products = productsData ? parseSheetData(productsData) : [];
-                sales = salesData ? parseSheetData(salesData) : [];
-                credits = creditsData ? parseSheetData(creditsData) : [];
-                goodsToMarket = goodsToMarketData ? parseSheetData(goodsToMarketData) : [];
-                goodsFromMarket = goodsFromMarketData ? parseSheetData(goodsFromMarketData) : [];
-                expenses = expensesData ? parseSheetData(expensesData) : [];
-                manualOrders = manualOrdersData ? parseSheetData(manualOrdersData) : [];
+                // Convert to arrays - with error handling for empty collections
+                products = collections[0].docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                sales = collections[1].docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                credits = collections[2].docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                goodsToMarket = collections[3].docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                goodsFromMarket = collections[4].docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                expenses = collections[5].docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                manualOrders = collections[6].docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
                 lastSyncTime = new Date();
-                updateSyncStatus('online', '🟢 Synced');
+                updateSyncStatus('online', '🟢 Firebase Loaded');
                 updateLastSyncTime();
                 
                 // Update UI
@@ -1064,38 +1069,11 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 checkLowStock();
                 
             } catch (error) {
-                console.error('Error loading data:', error);
-                updateSyncStatus('offline', '🔴 Sync Failed');
-                // Fallback to local storage if available
+                console.error('Error loading from Firebase:', error);
+                updateSyncStatus('offline', '🔴 Firebase Error');
+                // Fallback to local storage
                 loadFromLocalStorage();
             }
-        }
-
-        async function loadSheetData(sheetName) {
-            try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${sheetName}?key=${API_KEY}`;
-                const response = await fetch(url);
-                const data = await response.json();
-                return data.values;
-            } catch (error) {
-                console.warn(`Could not load ${sheetName}:`, error);
-                return null;
-            }
-        }
-
-        function parseSheetData(sheetData) {
-            if (!sheetData || sheetData.length < 2) return [];
-            
-            const headers = sheetData[0];
-            const rows = sheetData.slice(1);
-            
-            return rows.map(row => {
-                const obj = {};
-                headers.forEach((header, index) => {
-                    obj[header] = row[index] || '';
-                });
-                return obj;
-            });
         }
 
         async function saveAllData() {
@@ -1103,25 +1081,26 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             isSyncing = true;
             
             try {
-                updateSyncStatus('syncing', '🟡 Saving...');
+                updateSyncStatus('syncing', '🟡 Saving to Firebase...');
                 
+                // Save all data to Firebase
                 await Promise.all([
-                    saveSheetData('Products', products, ['id', 'name', 'category', 'cost', 'price', 'stock', 'minStock']),
-                    saveSheetData('Sales', sales, ['id', 'productName', 'quantity', 'price', 'total', 'customer', 'paymentMethod', 'timestamp', 'date']),
-                    saveSheetData('Credits', credits, ['id', 'customer', 'phone', 'productName', 'quantity', 'amount', 'date', 'timestamp', 'status']),
-                    saveSheetData('GoodsToMarket', goodsToMarket, ['id', 'productId', 'productName', 'quantity', 'destination', 'date', 'notes', 'timestamp']),
-                    saveSheetData('GoodsFromMarket', goodsFromMarket, ['id', 'productName', 'category', 'supplier', 'quantity', 'date', 'notes', 'timestamp']),
-                    saveSheetData('Expenses', expenses, ['id', 'reason', 'amount', 'timestamp', 'date']),
-                    saveSheetData('ManualOrders', manualOrders, ['id', 'productId', 'productName', 'quantity', 'supplier', 'notes', 'dateAdded', 'status'])
+                    saveCollection('products', products),
+                    saveCollection('sales', sales),
+                    saveCollection('credits', credits),
+                    saveCollection('goodsToMarket', goodsToMarket),
+                    saveCollection('goodsFromMarket', goodsFromMarket),
+                    saveCollection('expenses', expenses),
+                    saveCollection('manualOrders', manualOrders)
                 ]);
 
                 lastSyncTime = new Date();
-                updateSyncStatus('online', '🟢 Synced');
+                updateSyncStatus('online', '🟢 Firebase Saved');
                 updateLastSyncTime();
                 
             } catch (error) {
-                console.error('Error saving data:', error);
-                updateSyncStatus('offline', '🔴 Save Failed');
+                console.error('Error saving to Firebase:', error);
+                updateSyncStatus('offline', '🔴 Save Failed - Using Local');
                 // Save to local storage as backup
                 saveToLocalStorage();
             } finally {
@@ -1129,32 +1108,21 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             }
         }
 
-        async function saveSheetData(sheetName, data, headers) {
+        async function saveCollection(collectionName, data) {
             try {
-                const values = [
-                    headers,
-                    ...data.map(item => headers.map(header => item[header] || ''))
-                ];
-
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${sheetName}?valueInputOption=RAW&key=${API_KEY}`;
+                // Clear existing data
+                const querySnapshot = await getDocs(collection(db, collectionName));
+                const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+                await Promise.all(deletePromises);
                 
-                const response = await fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        values: values
-                    })
+                // Add all new data
+                const addPromises = data.map(item => {
+                    const { id, ...itemData } = item;
+                    return setDoc(doc(db, collectionName, id), itemData);
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                return await response.json();
+                await Promise.all(addPromises);
             } catch (error) {
-                console.error(`Error saving ${sheetName}:`, error);
+                console.error(`Error saving ${collectionName}:`, error);
                 throw error;
             }
         }
@@ -1231,31 +1199,8 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             document.getElementById('password').value = '';
             document.getElementById('errorMessage').style.display = 'none';
         }
-                // Test sync function
-        async function testSync() {
-            console.log('🔄 Testing Google Sheets sync...');
-            try {
-                const testUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Products?key=${API_KEY}`;
-                const response = await fetch(testUrl);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ Sync test PASSED - Sheet data:', data.values);
-                    updateSyncStatus('online', '🟢 Sync Working');
-                    return true;
-                } else {
-                    console.log('❌ Sync test FAILED - HTTP error:', response.status);
-                    updateSyncStatus('offline', '🔴 HTTP Error: ' + response.status);
-                    return false;
-                }
-            } catch (error) {
-                console.log('❌ Sync test FAILED - Network error:', error);
-                updateSyncStatus('offline', '🔴 Network Error');
-                return false;
-            }
-        }
-               async function initApp() {
-            await testSync();
+
+        async function initApp() {
             await loadAllData();
             startAutoSync();
         }
@@ -1302,7 +1247,8 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 displayExpenses();
             }
         }
-                // Product management
+
+        // Product management
         function showProductForm() {
             document.getElementById('productForm').style.display = 'block';
         }
@@ -1345,7 +1291,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 products.push(product);
             }
 
-            await saveAllData(); // Save to cloud
+            await saveAllData();
             displayProducts();
             hideProductForm();
             updateDashboard();
@@ -1368,7 +1314,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
         async function deleteProduct(id) {
             if (confirm('Are you sure you want to delete this product?')) {
                 products = products.filter(p => p.id !== id);
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 displayProducts();
                 updateDashboard();
             }
@@ -1459,7 +1405,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (!line || i === 0) continue; // Skip empty lines and header
+                if (!line || i === 0) continue;
                 
                 const parts = line.split(',').map(part => part.trim());
                 
@@ -1481,13 +1427,12 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                         }
                     } catch (error) {
                         errorCount++;
-                        console.error('Error importing product:', error);
                     }
                 }
             }
             
             if (importedCount > 0) {
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 displayProducts();
                 updateDashboard();
                 hideImportForm();
@@ -1623,7 +1568,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                 product.stock -= quantity;
             }
             
-            await saveAllData(); // Save to cloud
+            await saveAllData();
             displaySales();
             updateDashboard();
             resetSaleForm();
@@ -1683,7 +1628,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                     // Remove the sale
                     sales = sales.filter(s => s.id !== saleId);
                     
-                    await saveAllData(); // Save to cloud
+                    await saveAllData();
                     displaySales();
                     updateDashboard();
                     alert('Sale deleted successfully!');
@@ -1727,7 +1672,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             const credit = credits.find(c => c.id === creditId);
             if (credit) {
                 credit.status = 'paid';
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 displayCredits();
                 updateDashboard();
                 alert('Credit marked as paid!');
@@ -1737,12 +1682,12 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
         async function deleteCredit(creditId) {
             if (confirm('Are you sure you want to delete this credit record?')) {
                 credits = credits.filter(c => c.id !== creditId);
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 displayCredits();
                 updateDashboard();
             }
         }
-                // Goods to Order functions
+                    // Goods to Order functions
         function displayGoodsToOrder() {
             displayAutoGoodsToOrder();
             displayManualGoodsToOrder();
@@ -1849,7 +1794,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             };
             
             manualOrders.push(manualOrder);
-            await saveAllData(); // Save to cloud
+            await saveAllData();
             
             displayManualGoodsToOrder();
             resetManualOrderForm();
@@ -1867,7 +1812,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             const order = manualOrders.find(o => o.id === orderId);
             if (order) {
                 order.status = 'received';
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 displayManualGoodsToOrder();
                 alert('Order marked as received!');
             }
@@ -1876,7 +1821,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
         async function deleteManualOrder(orderId) {
             if (confirm('Are you sure you want to delete this manual order?')) {
                 manualOrders = manualOrders.filter(o => o.id !== orderId);
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 displayManualGoodsToOrder();
             }
         }
@@ -1925,7 +1870,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
         // Goods from Market functions
         function showGoodsFromMarketForm() {
             document.getElementById('goodsFromMarketForm').style.display = 'block';
-            // Set default date to today
             document.getElementById('receivedDate').value = new Date().toISOString().split('T')[0];
         }
 
@@ -1975,16 +1919,14 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             let product = products.find(p => p.name.toLowerCase() === productName.toLowerCase() && p.category === category);
             
             if (product) {
-                // Update existing product stock
                 product.stock += quantity;
             } else {
-                // Create new product
                 product = {
                     id: Date.now().toString(),
                     name: productName,
                     category: category,
-                    cost: 0, // Will be set later
-                    price: 0, // Will be set later
+                    cost: 0,
+                    price: 0,
                     stock: quantity,
                     minStock: 5
                 };
@@ -2003,7 +1945,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             };
             
             goodsFromMarket.push(goodsEntry);
-            await saveAllData(); // Save to cloud
+            await saveAllData();
             
             displayGoodsFromMarket();
             hideGoodsFromMarketForm();
@@ -2021,7 +1963,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                 return;
             }
             
-            // Sort by date (newest first)
             const sortedGoods = goodsFromMarket.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             sortedGoods.forEach(entry => {
@@ -2048,20 +1989,14 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             
             let filteredGoods = goodsFromMarket;
             
-            if (fromDate) {
-                filteredGoods = filteredGoods.filter(entry => entry.date >= fromDate);
-            }
-            
-            if (toDate) {
-                filteredGoods = filteredGoods.filter(entry => entry.date <= toDate);
-            }
+            if (fromDate) filteredGoods = filteredGoods.filter(entry => entry.date >= fromDate);
+            if (toDate) filteredGoods = filteredGoods.filter(entry => entry.date <= toDate);
             
             if (filteredGoods.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No records found for the selected date range</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No records found</td></tr>';
                 return;
             }
             
-            // Sort by date (newest first)
             const sortedGoods = filteredGoods.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             sortedGoods.forEach(entry => {
@@ -2090,14 +2025,13 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             if (confirm('Are you sure you want to delete this entry?')) {
                 const entry = goodsFromMarket.find(g => g.id === entryId);
                 
-                // Reduce product stock if needed
                 const product = products.find(p => p.name === entry.productName && p.category === entry.category);
                 if (product) {
                     product.stock = Math.max(0, product.stock - entry.quantity);
                 }
                 
                 goodsFromMarket = goodsFromMarket.filter(g => g.id !== entryId);
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 
                 displayGoodsFromMarket();
                 updateDashboard();
@@ -2123,7 +2057,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
         function showGoodsToMarketForm() {
             document.getElementById('goodsToMarketForm').style.display = 'block';
             populateMarketProducts();
-            // Set default date to today
             document.getElementById('marketDate').value = new Date().toISOString().split('T')[0];
         }
 
@@ -2176,7 +2109,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             
             const product = products.find(p => p.id === productId);
             
-            // Check if we have enough stock
             if (product.stock < quantity) {
                 alert(`Not enough stock! Only ${product.stock} available.`);
                 return;
@@ -2194,11 +2126,9 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             };
             
             goodsToMarket.push(goodsEntry);
-            
-            // Update product stock
             product.stock -= quantity;
             
-            await saveAllData(); // Save to cloud
+            await saveAllData();
             displayGoodsToMarket();
             hideGoodsToMarketForm();
             updateDashboard();
@@ -2214,7 +2144,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                 return;
             }
             
-            // Sort by date (newest first)
             const sortedGoods = goodsToMarket.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             sortedGoods.forEach(entry => {
@@ -2240,20 +2169,14 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             
             let filteredGoods = goodsToMarket;
             
-            if (fromDate) {
-                filteredGoods = filteredGoods.filter(entry => entry.date >= fromDate);
-            }
-            
-            if (toDate) {
-                filteredGoods = filteredGoods.filter(entry => entry.date <= toDate);
-            }
+            if (fromDate) filteredGoods = filteredGoods.filter(entry => entry.date >= fromDate);
+            if (toDate) filteredGoods = filteredGoods.filter(entry => entry.date <= toDate);
             
             if (filteredGoods.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No records found for the selected date range</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No records found</td></tr>';
                 return;
             }
             
-            // Sort by date (newest first)
             const sortedGoods = filteredGoods.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             sortedGoods.forEach(entry => {
@@ -2281,14 +2204,13 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             if (confirm('Are you sure you want to delete this entry?')) {
                 const entry = goodsToMarket.find(g => g.id === entryId);
                 
-                // Restore stock if needed
                 const product = products.find(p => p.id === entry.productId);
                 if (product) {
                     product.stock += entry.quantity;
                 }
                 
                 goodsToMarket = goodsToMarket.filter(g => g.id !== entryId);
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 
                 displayGoodsToMarket();
                 updateDashboard();
@@ -2334,7 +2256,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             };
             
             expenses.push(expense);
-            await saveAllData(); // Save to cloud
+            await saveAllData();
             
             displayExpenses();
             updateDashboard();
@@ -2381,7 +2303,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
         async function deleteExpense(expenseId) {
             if (confirm('Are you sure you want to delete this expense?')) {
                 expenses = expenses.filter(e => e.id !== expenseId);
-                await saveAllData(); // Save to cloud
+                await saveAllData();
                 
                 displayExpenses();
                 updateDashboard();
@@ -2403,63 +2325,41 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             
             downloadCSV(csv, 'expenses-report.csv');
         }
-                // Dashboard functions
+
+        // Dashboard functions
         function updateDashboard() {
             const today = new Date().toDateString();
             
-            // Calculate daily totals
             const todaySales = sales.filter(sale => new Date(sale.timestamp).toDateString() === today);
             const todayExpenses = expenses.filter(expense => new Date(expense.timestamp).toDateString() === today);
             
-            // Total Sales (all payment methods)
             const totalSales = todaySales.reduce((sum, sale) => sum + sale.total, 0);
-            
-            // Total Transfer
-            const totalTransfer = todaySales
-                .filter(sale => sale.paymentMethod === 'transfer')
-                .reduce((sum, sale) => sum + sale.total, 0);
-            
-            // Total POS
-            const totalPOS = todaySales
-                .filter(sale => sale.paymentMethod === 'pos')
-                .reduce((sum, sale) => sum + sale.total, 0);
-            
-            // Total Expenses
+            const totalTransfer = todaySales.filter(sale => sale.paymentMethod === 'transfer').reduce((sum, sale) => sum + sale.total, 0);
+            const totalPOS = todaySales.filter(sale => sale.paymentMethod === 'pos').reduce((sum, sale) => sum + sale.total, 0);
             const totalExpenses = todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-            
-            // Cash at Hand calculation
             const cashAtHand = totalSales - totalTransfer - totalPOS - totalExpenses;
             
-            // Update dashboard cards
             document.getElementById('totalSales').textContent = `₦${totalSales.toLocaleString()}`;
             document.getElementById('totalTransfer').textContent = `₦${totalTransfer.toLocaleString()}`;
             document.getElementById('totalPOS').textContent = `₦${totalPOS.toLocaleString()}`;
             document.getElementById('totalExpenses').textContent = `₦${totalExpenses.toLocaleString()}`;
             
-            // Color code cash at hand
             const cashElement = document.getElementById('cashAtHand');
             cashElement.textContent = `₦${cashAtHand.toLocaleString()}`;
             cashElement.className = cashAtHand >= 0 ? 'number cash-positive' : 'number cash-negative';
             
-            // Pending credits
-            const pendingCreditsTotal = credits
-                .filter(credit => credit.status === 'pending')
-                .reduce((sum, credit) => sum + credit.amount, 0);
+            const pendingCreditsTotal = credits.filter(credit => credit.status === 'pending').reduce((sum, credit) => sum + credit.amount, 0);
             document.getElementById('pendingCredits').textContent = `₦${pendingCreditsTotal.toLocaleString()}`;
             
-            // Update other sections
             updateRecentGoods();
             checkLowStock();
         }
 
         function updateRecentGoods() {
-            // Recent Goods from Market
             const fromMarketTbody = document.querySelector('#recentGoodsFromMarketTable tbody');
             fromMarketTbody.innerHTML = '';
             
-            const recentGoodsFromMarket = goodsFromMarket
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 5);
+            const recentGoodsFromMarket = goodsFromMarket.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
             
             if (recentGoodsFromMarket.length === 0) {
                 fromMarketTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No recent goods received</td></tr>';
@@ -2475,13 +2375,10 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                 });
             }
 
-            // Recent Goods to Market
             const toMarketTbody = document.querySelector('#recentGoodsToMarketTable tbody');
             toMarketTbody.innerHTML = '';
             
-            const recentGoodsToMarket = goodsToMarket
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 5);
+            const recentGoodsToMarket = goodsToMarket.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
             
             if (recentGoodsToMarket.length === 0) {
                 toMarketTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No recent goods sent to market</td></tr>';
@@ -2558,7 +2455,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
 
         // Initialize date fields
         document.addEventListener('DOMContentLoaded', function() {
-            // Set default dates for filters
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filterFromDate').value = today;
             document.getElementById('filterToDate').value = today;
@@ -2567,5 +2463,4 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
         });
     </script>
 </body>
-
 </html>
