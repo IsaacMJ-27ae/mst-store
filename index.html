@@ -550,8 +550,7 @@
                     <tbody></tbody>
                 </table>
             </div>
-            
-            <!-- Products Tab -->
+                        <!-- Products Tab -->
             <div id="products" class="tab-content">
                 <div style="display: flex; justify-content: between; margin-bottom: 20px; gap: 10px; flex-wrap: wrap;">
                     <div style="display: flex; gap: 10px;">
@@ -650,7 +649,8 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                     <tbody></tbody>
                 </table>
             </div>
-                        <!-- Sales Tab -->
+
+            <!-- Sales Tab -->
             <div id="sales" class="tab-content">
                 <h3>Record New Sale</h3>
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
@@ -700,14 +700,12 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                             <th>Total</th>
                             <th>Customer</th>
                             <th>Payment Method</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
-            
-            <!-- Goods to Order Tab -->
+                        <!-- Goods to Order Tab -->
             <div id="goodsToOrder" class="tab-content">
                 <h3>Goods to Order</h3>
                 
@@ -853,8 +851,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                     <tbody></tbody>
                 </table>
             </div>
-            
-            <!-- Goods to Market Tab -->
+                        <!-- Goods to Market Tab -->
             <div id="goodsToMarket" class="tab-content">
                 <h3>Goods Sent to Market</h3>
                 <button onclick="showGoodsToMarketForm()">Add New Entry</button>
@@ -991,26 +988,8 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             </div>
         </div>
     </div>
-        <script type="module">
-        // Firebase imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBLCSniALn9OAe_zmwUkdQuzcTPBsnwz00",
-            authDomain: "mst-store-management.firebaseapp.com",
-            projectId: "mst-store-management",
-            storageBucket: "mst-store-management.firebasestorage.app",
-            messagingSenderId: "1094134989055",
-            appId: "1:1094134989055:web:4ad75b94f2bfb139aaccca"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        // Data storage
+        <script>
+        // Data storage - Local Only
         let products = [];
         let sales = [];
         let credits = [];
@@ -1019,8 +998,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
         let expenses = [];
         let manualOrders = [];
         let editingProductId = null;
-        let lastSyncTime = null;
-        let isSyncing = false;
+        let lastSaveTime = null;
 
         // Login System
         const validUsers = {
@@ -1028,34 +1006,23 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             'MSTsecretary': 'loginSec8989'
         };
 
-        // Firebase Database Functions - FIXED VERSION
-        async function loadAllData() {
+        // Local Data Management Functions
+        function loadAllData() {
             try {
-                updateSyncStatus('syncing', '🟡 Loading from Firebase...');
+                updateSaveStatus('loading', '🟡 Loading Local Data...');
                 
-                // Load all data from Firebase
-                const collections = await Promise.all([
-                    getDocs(collection(db, 'products')),
-                    getDocs(collection(db, 'sales')),
-                    getDocs(collection(db, 'credits')),
-                    getDocs(collection(db, 'goodsToMarket')),
-                    getDocs(collection(db, 'goodsFromMarket')),
-                    getDocs(collection(db, 'expenses')),
-                    getDocs(collection(db, 'manualOrders'))
-                ]);
+                // Load all data from localStorage
+                products = JSON.parse(localStorage.getItem('products')) || [];
+                sales = JSON.parse(localStorage.getItem('sales')) || [];
+                credits = JSON.parse(localStorage.getItem('credits')) || [];
+                goodsToMarket = JSON.parse(localStorage.getItem('goodsToMarket')) || [];
+                goodsFromMarket = JSON.parse(localStorage.getItem('goodsFromMarket')) || [];
+                expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+                manualOrders = JSON.parse(localStorage.getItem('manualOrders')) || [];
 
-                // Convert to arrays - with error handling for empty collections
-                products = collections[0].docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                sales = collections[1].docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                credits = collections[2].docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                goodsToMarket = collections[3].docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                goodsFromMarket = collections[4].docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                expenses = collections[5].docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                manualOrders = collections[6].docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                lastSyncTime = new Date();
-                updateSyncStatus('online', '🟢 Firebase Loaded');
-                updateLastSyncTime();
+                lastSaveTime = new Date();
+                updateSaveStatus('saved', '🟢 Local Data Loaded');
+                updateLastSaveTime();
                 
                 // Update UI
                 updateDashboard();
@@ -1069,111 +1036,58 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 checkLowStock();
                 
             } catch (error) {
-                console.error('Error loading from Firebase:', error);
-                updateSyncStatus('offline', '🔴 Firebase Error');
-                // Fallback to local storage
-                loadFromLocalStorage();
+                console.error('Error loading local data:', error);
+                updateSaveStatus('error', '🔴 Load Error');
             }
         }
 
-        async function saveAllData() {
-            if (isSyncing) return;
-            isSyncing = true;
-            
+        function saveAllData() {
             try {
-                updateSyncStatus('syncing', '🟡 Saving to Firebase...');
+                updateSaveStatus('saving', '🟡 Saving to Browser...');
                 
-                // Save all data to Firebase
-                await Promise.all([
-                    saveCollection('products', products),
-                    saveCollection('sales', sales),
-                    saveCollection('credits', credits),
-                    saveCollection('goodsToMarket', goodsToMarket),
-                    saveCollection('goodsFromMarket', goodsFromMarket),
-                    saveCollection('expenses', expenses),
-                    saveCollection('manualOrders', manualOrders)
-                ]);
+                // Save all data to localStorage
+                localStorage.setItem('products', JSON.stringify(products));
+                localStorage.setItem('sales', JSON.stringify(sales));
+                localStorage.setItem('credits', JSON.stringify(credits));
+                localStorage.setItem('goodsToMarket', JSON.stringify(goodsToMarket));
+                localStorage.setItem('goodsFromMarket', JSON.stringify(goodsFromMarket));
+                localStorage.setItem('expenses', JSON.stringify(expenses));
+                localStorage.setItem('manualOrders', JSON.stringify(manualOrders));
 
-                lastSyncTime = new Date();
-                updateSyncStatus('online', '🟢 Firebase Saved');
-                updateLastSyncTime();
+                lastSaveTime = new Date();
+                updateSaveStatus('saved', '🟢 Saved to Browser');
+                updateLastSaveTime();
                 
             } catch (error) {
-                console.error('Error saving to Firebase:', error);
-                updateSyncStatus('offline', '🔴 Save Failed - Using Local');
-                // Save to local storage as backup
-                saveToLocalStorage();
-            } finally {
-                isSyncing = false;
+                console.error('Error saving to browser:', error);
+                updateSaveStatus('error', '🔴 Save Failed');
             }
         }
 
-        async function saveCollection(collectionName, data) {
-            try {
-                // Clear existing data
-                const querySnapshot = await getDocs(collection(db, collectionName));
-                const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-                await Promise.all(deletePromises);
-                
-                // Add all new data
-                const addPromises = data.map(item => {
-                    const { id, ...itemData } = item;
-                    return setDoc(doc(db, collectionName, id), itemData);
-                });
-                await Promise.all(addPromises);
-            } catch (error) {
-                console.error(`Error saving ${collectionName}:`, error);
-                throw error;
+        function updateSaveStatus(status, message) {
+            const statusElement = document.getElementById('syncStatus');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.className = `sync-status sync-${status}`;
             }
         }
 
-        function updateSyncStatus(status, message) {
-            const syncElement = document.getElementById('syncStatus');
-            if (syncElement) {
-                syncElement.textContent = message;
-                syncElement.className = `sync-status sync-${status}`;
+        function updateLastSaveTime() {
+            const lastSaveElement = document.getElementById('lastSync');
+            if (lastSaveElement && lastSaveTime) {
+                lastSaveElement.textContent = `Last save: ${lastSaveTime.toLocaleTimeString()}`;
             }
         }
 
-        function updateLastSyncTime() {
-            const lastSyncElement = document.getElementById('lastSync');
-            if (lastSyncElement && lastSyncTime) {
-                lastSyncElement.textContent = `Last sync: ${lastSyncTime.toLocaleTimeString()}`;
-            }
-        }
-
-        // Local storage fallback
-        function saveToLocalStorage() {
-            localStorage.setItem('products_backup', JSON.stringify(products));
-            localStorage.setItem('sales_backup', JSON.stringify(sales));
-            localStorage.setItem('credits_backup', JSON.stringify(credits));
-            localStorage.setItem('goodsToMarket_backup', JSON.stringify(goodsToMarket));
-            localStorage.setItem('goodsFromMarket_backup', JSON.stringify(goodsFromMarket));
-            localStorage.setItem('expenses_backup', JSON.stringify(expenses));
-            localStorage.setItem('manualOrders_backup', JSON.stringify(manualOrders));
-        }
-
-        function loadFromLocalStorage() {
-            products = JSON.parse(localStorage.getItem('products_backup')) || [];
-            sales = JSON.parse(localStorage.getItem('sales_backup')) || [];
-            credits = JSON.parse(localStorage.getItem('credits_backup')) || [];
-            goodsToMarket = JSON.parse(localStorage.getItem('goodsToMarket_backup')) || [];
-            goodsFromMarket = JSON.parse(localStorage.getItem('goodsFromMarket_backup')) || [];
-            expenses = JSON.parse(localStorage.getItem('expenses_backup')) || [];
-            manualOrders = JSON.parse(localStorage.getItem('manualOrders_backup')) || [];
-        }
-
-        // Auto-sync every 30 seconds
-        function startAutoSync() {
-            setInterval(async () => {
-                if (!isSyncing) {
-                    await loadAllData();
-                }
+        // Auto-save every 30 seconds
+        function startAutoSave() {
+            setInterval(() => {
+                saveAllData();
             }, 30000);
         }
 
         // Login functions
-        async function login() {
+        function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
@@ -1183,7 +1097,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 localStorage.setItem('currentUser', username);
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
-                await initApp();
+                initApp();
             } else {
                 errorMessage.style.display = 'block';
                 document.getElementById('password').value = '';
@@ -1200,17 +1114,17 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             document.getElementById('errorMessage').style.display = 'none';
         }
 
-        async function initApp() {
-            await loadAllData();
-            startAutoSync();
+        function initApp() {
+            loadAllData();
+            startAutoSave();
         }
 
         // Check login status on page load
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             if (localStorage.getItem('loggedIn') === 'true') {
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
-                await initApp();
+                initApp();
             }
         });
 
@@ -1247,8 +1161,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 displayExpenses();
             }
         }
-
-        // Product management
+                    // Product management
         function showProductForm() {
             document.getElementById('productForm').style.display = 'block';
         }
@@ -1268,7 +1181,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             document.getElementById('productMinStock').value = '5';
         }
 
-        async function saveProduct() {
+        function saveProduct() {
             const product = {
                 id: editingProductId || Date.now().toString(),
                 name: document.getElementById('productName').value,
@@ -1291,7 +1204,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 products.push(product);
             }
 
-            await saveAllData();
+            saveAllData();
             displayProducts();
             hideProductForm();
             updateDashboard();
@@ -1311,10 +1224,10 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             }
         }
 
-        async function deleteProduct(id) {
+        function deleteProduct(id) {
             if (confirm('Are you sure you want to delete this product?')) {
                 products = products.filter(p => p.id !== id);
-                await saveAllData();
+                saveAllData();
                 displayProducts();
                 updateDashboard();
             }
@@ -1364,103 +1277,6 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             });
         }
 
-        // Bulk import functions
-        function showImportForm() {
-            document.getElementById('importForm').style.display = 'block';
-        }
-
-        function hideImportForm() {
-            document.getElementById('importForm').style.display = 'none';
-            document.getElementById('csvData').value = '';
-            document.getElementById('csvFile').value = '';
-        }
-
-        async function importProducts() {
-            const csvData = document.getElementById('csvData').value;
-            const fileInput = document.getElementById('csvFile');
-            
-            if (!csvData && !fileInput.files[0]) {
-                alert('Please paste CSV data or select a CSV file');
-                return;
-            }
-            
-            let importData = csvData;
-            
-            if (fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    importData = e.target.result;
-                    processCSVData(importData);
-                };
-                reader.readAsText(fileInput.files[0]);
-            } else {
-                processCSVData(importData);
-            }
-        }
-
-        async function processCSVData(csvData) {
-            const lines = csvData.split('\n');
-            let importedCount = 0;
-            let errorCount = 0;
-            
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line || i === 0) continue;
-                
-                const parts = line.split(',').map(part => part.trim());
-                
-                if (parts.length >= 5) {
-                    try {
-                        const product = {
-                            id: Date.now().toString() + i,
-                            name: parts[0] || '',
-                            category: parts[1] || 'General Computer Accessories',
-                            cost: parseFloat(parts[2]) || 0,
-                            price: parseFloat(parts[3]) || 0,
-                            stock: parseInt(parts[4]) || 0,
-                            minStock: parseInt(parts[5]) || 5
-                        };
-                        
-                        if (product.name) {
-                            products.push(product);
-                            importedCount++;
-                        }
-                    } catch (error) {
-                        errorCount++;
-                    }
-                }
-            }
-            
-            if (importedCount > 0) {
-                await saveAllData();
-                displayProducts();
-                updateDashboard();
-                hideImportForm();
-                alert(`Successfully imported ${importedCount} products!${errorCount > 0 ? ` (${errorCount} errors)` : ''}`);
-            } else {
-                alert('No products were imported. Please check your CSV format.');
-            }
-        }
-
-        function downloadTemplate() {
-            const template = `Name,Category,Cost,Price,Stock,MinStock
-HP Laptop 15s,Laptops,150000,180000,10,5
-USB-C Cable,General Computer Accessories,500,800,50,10
-iPhone Charger,Chargers,1200,1500,25,5
-Laptop Bag,General Computer Accessories,3000,4000,15,3
-HDMI Cable,General Computer Accessories,800,1200,30,5`;
-            
-            const blob = new Blob([template], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'product-import-template.csv');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
         // Sales management
         function searchSaleProducts() {
             const searchTerm = document.getElementById('saleSearch').value.toLowerCase();
@@ -1504,7 +1320,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             }
         }
 
-        async function addSaleItem() {
+        function addSaleItem() {
             const productName = document.getElementById('saleSearch').value;
             const quantity = parseInt(document.getElementById('saleQuantity').value) || 1;
             const price = parseFloat(document.getElementById('salePrice').value) || 0;
@@ -1568,7 +1384,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                 product.stock -= quantity;
             }
             
-            await saveAllData();
+            saveAllData();
             displaySales();
             updateDashboard();
             resetSaleForm();
@@ -1602,38 +1418,8 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                     <td>₦${sale.total.toLocaleString()}</td>
                     <td>${sale.customer}</td>
                     <td>${sale.paymentMethod}</td>
-                    <td>
-                        <button onclick="deleteSale('${sale.id}')" class="secondary">Delete</button>
-                    </td>
                 `;
             });
-        }
-
-        async function deleteSale(saleId) {
-            if (confirm('Are you sure you want to delete this sale?')) {
-                const sale = sales.find(s => s.id === saleId);
-                
-                if (sale) {
-                    // Restore product stock
-                    const product = products.find(p => p.name === sale.productName);
-                    if (product) {
-                        product.stock += sale.quantity;
-                    }
-                    
-                    // Remove from credits if it was a credit sale
-                    if (sale.paymentMethod === 'credit') {
-                        credits = credits.filter(c => c.id !== saleId);
-                    }
-                    
-                    // Remove the sale
-                    sales = sales.filter(s => s.id !== saleId);
-                    
-                    await saveAllData();
-                    displaySales();
-                    updateDashboard();
-                    alert('Sale deleted successfully!');
-                }
-            }
         }
 
         // Credit management
@@ -1662,668 +1448,20 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                     <td>${credit.timestamp}</td>
                     <td>
                         <button onclick="markCreditPaid('${credit.id}')" class="success">Mark Paid</button>
-                        <button onclick="deleteCredit('${credit.id}')" class="secondary">Delete</button>
                     </td>
                 `;
             });
         }
 
-        async function markCreditPaid(creditId) {
+        function markCreditPaid(creditId) {
             const credit = credits.find(c => c.id === creditId);
             if (credit) {
                 credit.status = 'paid';
-                await saveAllData();
+                saveAllData();
                 displayCredits();
                 updateDashboard();
                 alert('Credit marked as paid!');
             }
-        }
-
-        async function deleteCredit(creditId) {
-            if (confirm('Are you sure you want to delete this credit record?')) {
-                credits = credits.filter(c => c.id !== creditId);
-                await saveAllData();
-                displayCredits();
-                updateDashboard();
-            }
-        }
-                    // Goods to Order functions
-        function displayGoodsToOrder() {
-            displayAutoGoodsToOrder();
-            displayManualGoodsToOrder();
-            populateManualOrderProducts();
-        }
-
-        function displayAutoGoodsToOrder() {
-            const tbody = document.querySelector('#autoGoodsToOrderTable tbody');
-            tbody.innerHTML = '';
-            
-            const reorderItems = products.filter(p => p.stock <= p.minStock);
-            
-            if (reorderItems.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">All products are sufficiently stocked</td></tr>';
-                return;
-            }
-            
-            reorderItems.forEach(product => {
-                const row = tbody.insertRow();
-                const needToOrder = product.minStock - product.stock;
-                row.innerHTML = `
-                    <td>${product.name}</td>
-                    <td class="low-stock">${product.stock}</td>
-                    <td>${product.minStock}</td>
-                    <td class="low-stock">${needToOrder}</td>
-                    <td><input type="text" id="supplier-${product.id}" placeholder="Supplier name" style="padding: 5px; width: 120px;"></td>
-                    <td>
-                        <button onclick="orderProduct('${product.id}')" class="success">Mark Ordered</button>
-                    </td>
-                `;
-            });
-        }
-
-        function displayManualGoodsToOrder() {
-            const tbody = document.querySelector('#manualGoodsToOrderTable tbody');
-            tbody.innerHTML = '';
-            
-            if (manualOrders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No manual orders added</td></tr>';
-                return;
-            }
-            
-            manualOrders.forEach(order => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${order.productName}</td>
-                    <td>${order.quantity}</td>
-                    <td>${order.supplier}</td>
-                    <td>${order.notes || '-'}</td>
-                    <td>${order.dateAdded}</td>
-                    <td>${order.status}</td>
-                    <td>
-                        <button onclick="markManualOrderReceived('${order.id}')" class="success">Mark Received</button>
-                        <button onclick="deleteManualOrder('${order.id}')" class="secondary">Delete</button>
-                    </td>
-                `;
-            });
-        }
-
-        function populateManualOrderProducts() {
-            const select = document.getElementById('manualOrderProduct');
-            select.innerHTML = '<option value="">Select Product</option>';
-            
-            products.forEach(product => {
-                const option = document.createElement('option');
-                option.value = product.id;
-                option.textContent = product.name;
-                select.appendChild(option);
-            });
-        }
-
-        async function addManualOrder() {
-            const productId = document.getElementById('manualOrderProduct').value;
-            const quantity = parseInt(document.getElementById('manualOrderQuantity').value) || 0;
-            const supplier = document.getElementById('manualOrderSupplier').value;
-            const notes = document.getElementById('manualOrderNotes').value;
-            
-            if (!productId) {
-                alert('Please select a product');
-                return;
-            }
-            
-            if (quantity <= 0) {
-                alert('Please enter a valid quantity');
-                return;
-            }
-            
-            if (!supplier) {
-                alert('Please enter supplier name');
-                return;
-            }
-            
-            const product = products.find(p => p.id === productId);
-            
-            const manualOrder = {
-                id: Date.now().toString(),
-                productId: productId,
-                productName: product.name,
-                quantity: quantity,
-                supplier: supplier,
-                notes: notes,
-                dateAdded: new Date().toISOString().split('T')[0],
-                status: 'pending'
-            };
-            
-            manualOrders.push(manualOrder);
-            await saveAllData();
-            
-            displayManualGoodsToOrder();
-            resetManualOrderForm();
-            alert('Manual order added successfully!');
-        }
-
-        function resetManualOrderForm() {
-            document.getElementById('manualOrderProduct').value = '';
-            document.getElementById('manualOrderQuantity').value = '';
-            document.getElementById('manualOrderSupplier').value = '';
-            document.getElementById('manualOrderNotes').value = '';
-        }
-
-        async function markManualOrderReceived(orderId) {
-            const order = manualOrders.find(o => o.id === orderId);
-            if (order) {
-                order.status = 'received';
-                await saveAllData();
-                displayManualGoodsToOrder();
-                alert('Order marked as received!');
-            }
-        }
-
-        async function deleteManualOrder(orderId) {
-            if (confirm('Are you sure you want to delete this manual order?')) {
-                manualOrders = manualOrders.filter(o => o.id !== orderId);
-                await saveAllData();
-                displayManualGoodsToOrder();
-            }
-        }
-
-        function orderProduct(productId) {
-            const product = products.find(p => p.id === productId);
-            const supplierInput = document.getElementById(`supplier-${productId}`);
-            const supplier = supplierInput.value.trim();
-            
-            if (!supplier) {
-                alert('Please enter supplier name');
-                return;
-            }
-            
-            if (confirm(`Mark ${product.name} as ordered from ${supplier}?`)) {
-                alert(`${product.name} marked as ordered from ${supplier}`);
-                supplierInput.value = '';
-                displayAutoGoodsToOrder();
-            }
-        }
-
-        function downloadGoodsToOrderReport() {
-            const reorderItems = products.filter(p => p.stock <= p.minStock);
-            
-            if (reorderItems.length === 0 && manualOrders.length === 0) {
-                alert('No goods need to be ordered');
-                return;
-            }
-            
-            let csv = 'Type,Product,Quantity,Supplier,Notes,Status\n';
-            
-            // Add automatic orders
-            reorderItems.forEach(product => {
-                const needToOrder = product.minStock - product.stock;
-                csv += `Auto,"${product.name}",${needToOrder},,"Low stock item","pending"\n`;
-            });
-            
-            // Add manual orders
-            manualOrders.forEach(order => {
-                csv += `Manual,"${order.productName}",${order.quantity},"${order.supplier}","${order.notes || ''}","${order.status}"\n`;
-            });
-            
-            downloadCSV(csv, 'goods-to-order-report.csv');
-        }
-
-        // Goods from Market functions
-        function showGoodsFromMarketForm() {
-            document.getElementById('goodsFromMarketForm').style.display = 'block';
-            document.getElementById('receivedDate').value = new Date().toISOString().split('T')[0];
-        }
-
-        function hideGoodsFromMarketForm() {
-            document.getElementById('goodsFromMarketForm').style.display = 'none';
-            resetGoodsFromMarketForm();
-        }
-
-        function resetGoodsFromMarketForm() {
-            document.getElementById('receivedProductName').value = '';
-            document.getElementById('receivedProductCategory').value = '';
-            document.getElementById('receivedSupplier').value = '';
-            document.getElementById('receivedQuantity').value = '';
-            document.getElementById('receivedDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('receivedNotes').value = '';
-        }
-
-        async function saveGoodsFromMarket() {
-            const productName = document.getElementById('receivedProductName').value;
-            const category = document.getElementById('receivedProductCategory').value;
-            const supplier = document.getElementById('receivedSupplier').value;
-            const quantity = parseInt(document.getElementById('receivedQuantity').value) || 0;
-            const date = document.getElementById('receivedDate').value;
-            const notes = document.getElementById('receivedNotes').value;
-            
-            if (!productName) {
-                alert('Please enter product name');
-                return;
-            }
-            
-            if (!category) {
-                alert('Please select category');
-                return;
-            }
-            
-            if (!supplier) {
-                alert('Please enter supplier name');
-                return;
-            }
-            
-            if (quantity <= 0) {
-                alert('Please enter a valid quantity');
-                return;
-            }
-            
-            // Check if product already exists
-            let product = products.find(p => p.name.toLowerCase() === productName.toLowerCase() && p.category === category);
-            
-            if (product) {
-                product.stock += quantity;
-            } else {
-                product = {
-                    id: Date.now().toString(),
-                    name: productName,
-                    category: category,
-                    cost: 0,
-                    price: 0,
-                    stock: quantity,
-                    minStock: 5
-                };
-                products.push(product);
-            }
-            
-            const goodsEntry = {
-                id: Date.now().toString(),
-                productName: productName,
-                category: category,
-                supplier: supplier,
-                quantity: quantity,
-                date: date,
-                notes: notes,
-                timestamp: new Date().toLocaleString()
-            };
-            
-            goodsFromMarket.push(goodsEntry);
-            await saveAllData();
-            
-            displayGoodsFromMarket();
-            hideGoodsFromMarketForm();
-            updateDashboard();
-            displayProducts();
-            alert(`Goods received recorded successfully! ${productName} added to ${category} category.`);
-        }
-
-        function displayGoodsFromMarket() {
-            const tbody = document.querySelector('#goodsFromMarketTable tbody');
-            tbody.innerHTML = '';
-            
-            if (goodsFromMarket.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No goods received recorded</td></tr>';
-                return;
-            }
-            
-            const sortedGoods = goodsFromMarket.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedGoods.forEach(entry => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${entry.date}</td>
-                    <td>${entry.productName}</td>
-                    <td>${entry.category}</td>
-                    <td>${entry.quantity}</td>
-                    <td>${entry.supplier}</td>
-                    <td>${entry.notes || '-'}</td>
-                    <td>
-                        <button onclick="deleteGoodsFromMarket('${entry.id}')" class="secondary">Delete</button>
-                    </td>
-                `;
-            });
-        }
-
-        function filterGoodsFromMarket() {
-            const fromDate = document.getElementById('filterFromDateReceived').value;
-            const toDate = document.getElementById('filterToDateReceived').value;
-            const tbody = document.querySelector('#goodsFromMarketTable tbody');
-            tbody.innerHTML = '';
-            
-            let filteredGoods = goodsFromMarket;
-            
-            if (fromDate) filteredGoods = filteredGoods.filter(entry => entry.date >= fromDate);
-            if (toDate) filteredGoods = filteredGoods.filter(entry => entry.date <= toDate);
-            
-            if (filteredGoods.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No records found</td></tr>';
-                return;
-            }
-            
-            const sortedGoods = filteredGoods.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedGoods.forEach(entry => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${entry.date}</td>
-                    <td>${entry.productName}</td>
-                    <td>${entry.category}</td>
-                    <td>${entry.quantity}</td>
-                    <td>${entry.supplier}</td>
-                    <td>${entry.notes || '-'}</td>
-                    <td>
-                        <button onclick="deleteGoodsFromMarket('${entry.id}')" class="secondary">Delete</button>
-                    </td>
-                `;
-            });
-        }
-
-        function clearGoodsFromMarketFilter() {
-            document.getElementById('filterFromDateReceived').value = '';
-            document.getElementById('filterToDateReceived').value = '';
-            displayGoodsFromMarket();
-        }
-
-        async function deleteGoodsFromMarket(entryId) {
-            if (confirm('Are you sure you want to delete this entry?')) {
-                const entry = goodsFromMarket.find(g => g.id === entryId);
-                
-                const product = products.find(p => p.name === entry.productName && p.category === entry.category);
-                if (product) {
-                    product.stock = Math.max(0, product.stock - entry.quantity);
-                }
-                
-                goodsFromMarket = goodsFromMarket.filter(g => g.id !== entryId);
-                await saveAllData();
-                
-                displayGoodsFromMarket();
-                updateDashboard();
-            }
-        }
-
-        function downloadGoodsFromMarketReport() {
-            if (goodsFromMarket.length === 0) {
-                alert('No goods received recorded');
-                return;
-            }
-            
-            let csv = 'Date,Product,Category,Quantity,Supplier,Notes\n';
-            
-            goodsFromMarket.forEach(entry => {
-                csv += `"${entry.date}","${entry.productName}","${entry.category}",${entry.quantity},"${entry.supplier}","${entry.notes || ''}"\n`;
-            });
-            
-            downloadCSV(csv, 'goods-from-market-report.csv');
-        }
-
-        // Goods to Market functions
-        function showGoodsToMarketForm() {
-            document.getElementById('goodsToMarketForm').style.display = 'block';
-            populateMarketProducts();
-            document.getElementById('marketDate').value = new Date().toISOString().split('T')[0];
-        }
-
-        function hideGoodsToMarketForm() {
-            document.getElementById('goodsToMarketForm').style.display = 'none';
-            resetGoodsToMarketForm();
-        }
-
-        function resetGoodsToMarketForm() {
-            document.getElementById('marketProduct').value = '';
-            document.getElementById('marketQuantity').value = '';
-            document.getElementById('marketDestination').value = '';
-            document.getElementById('marketDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('marketNotes').value = '';
-        }
-
-        function populateMarketProducts() {
-            const select = document.getElementById('marketProduct');
-            select.innerHTML = '<option value="">Select Product</option>';
-            
-            products.forEach(product => {
-                const option = document.createElement('option');
-                option.value = product.id;
-                option.textContent = `${product.name} (Stock: ${product.stock})`;
-                select.appendChild(option);
-            });
-        }
-
-        async function saveGoodsToMarket() {
-            const productId = document.getElementById('marketProduct').value;
-            const quantity = parseInt(document.getElementById('marketQuantity').value) || 0;
-            const destination = document.getElementById('marketDestination').value;
-            const date = document.getElementById('marketDate').value;
-            const notes = document.getElementById('marketNotes').value;
-            
-            if (!productId) {
-                alert('Please select a product');
-                return;
-            }
-            
-            if (quantity <= 0) {
-                alert('Please enter a valid quantity');
-                return;
-            }
-            
-            if (!destination) {
-                alert('Please enter destination/market');
-                return;
-            }
-            
-            const product = products.find(p => p.id === productId);
-            
-            if (product.stock < quantity) {
-                alert(`Not enough stock! Only ${product.stock} available.`);
-                return;
-            }
-            
-            const goodsEntry = {
-                id: Date.now().toString(),
-                productId: productId,
-                productName: product.name,
-                quantity: quantity,
-                destination: destination,
-                date: date,
-                notes: notes,
-                timestamp: new Date().toLocaleString()
-            };
-            
-            goodsToMarket.push(goodsEntry);
-            product.stock -= quantity;
-            
-            await saveAllData();
-            displayGoodsToMarket();
-            hideGoodsToMarketForm();
-            updateDashboard();
-            alert(`Goods sent to market recorded successfully!`);
-        }
-
-        function displayGoodsToMarket() {
-            const tbody = document.querySelector('#goodsToMarketTable tbody');
-            tbody.innerHTML = '';
-            
-            if (goodsToMarket.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No goods sent to market recorded</td></tr>';
-                return;
-            }
-            
-            const sortedGoods = goodsToMarket.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedGoods.forEach(entry => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${entry.date}</td>
-                    <td>${entry.productName}</td>
-                    <td>${entry.quantity}</td>
-                    <td>${entry.destination}</td>
-                    <td>${entry.notes || '-'}</td>
-                    <td>
-                        <button onclick="deleteGoodsToMarket('${entry.id}')" class="secondary">Delete</button>
-                    </td>
-                `;
-            });
-        }
-
-        function filterGoodsToMarket() {
-            const fromDate = document.getElementById('filterFromDate').value;
-            const toDate = document.getElementById('filterToDate').value;
-            const tbody = document.querySelector('#goodsToMarketTable tbody');
-            tbody.innerHTML = '';
-            
-            let filteredGoods = goodsToMarket;
-            
-            if (fromDate) filteredGoods = filteredGoods.filter(entry => entry.date >= fromDate);
-            if (toDate) filteredGoods = filteredGoods.filter(entry => entry.date <= toDate);
-            
-            if (filteredGoods.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No records found</td></tr>';
-                return;
-            }
-            
-            const sortedGoods = filteredGoods.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedGoods.forEach(entry => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${entry.date}</td>
-                    <td>${entry.productName}</td>
-                    <td>${entry.quantity}</td>
-                    <td>${entry.destination}</td>
-                    <td>${entry.notes || '-'}</td>
-                    <td>
-                        <button onclick="deleteGoodsToMarket('${entry.id}')" class="secondary">Delete</button>
-                    </td>
-                `;
-            });
-        }
-
-        function clearGoodsFilter() {
-            document.getElementById('filterFromDate').value = '';
-            document.getElementById('filterToDate').value = '';
-            displayGoodsToMarket();
-        }
-
-        async function deleteGoodsToMarket(entryId) {
-            if (confirm('Are you sure you want to delete this entry?')) {
-                const entry = goodsToMarket.find(g => g.id === entryId);
-                
-                const product = products.find(p => p.id === entry.productId);
-                if (product) {
-                    product.stock += entry.quantity;
-                }
-                
-                goodsToMarket = goodsToMarket.filter(g => g.id !== entryId);
-                await saveAllData();
-                
-                displayGoodsToMarket();
-                updateDashboard();
-            }
-        }
-
-        function downloadGoodsToMarketReport() {
-            if (goodsToMarket.length === 0) {
-                alert('No goods sent to market recorded');
-                return;
-            }
-            
-            let csv = 'Date,Product,Quantity,Destination,Notes\n';
-            
-            goodsToMarket.forEach(entry => {
-                csv += `"${entry.date}","${entry.productName}",${entry.quantity},"${entry.destination}","${entry.notes || ''}"\n`;
-            });
-            
-            downloadCSV(csv, 'goods-to-market-report.csv');
-        }
-
-        // Expenses functions
-        async function addExpense() {
-            const reason = document.getElementById('expenseReason').value;
-            const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
-            
-            if (!reason) {
-                alert('Please enter reason for expense');
-                return;
-            }
-            
-            if (amount <= 0) {
-                alert('Please enter a valid amount');
-                return;
-            }
-            
-            const expense = {
-                id: Date.now().toString(),
-                reason: reason,
-                amount: amount,
-                timestamp: new Date().toLocaleString(),
-                date: new Date().toISOString().split('T')[0]
-            };
-            
-            expenses.push(expense);
-            await saveAllData();
-            
-            displayExpenses();
-            updateDashboard();
-            resetExpenseForm();
-            alert('Expense recorded successfully!');
-        }
-
-        function resetExpenseForm() {
-            document.getElementById('expenseReason').value = '';
-            document.getElementById('expenseAmount').value = '';
-        }
-
-        function displayExpenses() {
-            const tbody = document.querySelector('#expensesTable tbody');
-            tbody.innerHTML = '';
-            
-            const today = new Date().toDateString();
-            const todayExpenses = expenses.filter(expense => new Date(expense.timestamp).toDateString() === today);
-            
-            if (todayExpenses.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No expenses recorded today</td></tr>';
-                document.getElementById('dailyExpenseTotal').textContent = '0';
-                return;
-            }
-            
-            let dailyTotal = 0;
-            
-            todayExpenses.forEach(expense => {
-                dailyTotal += expense.amount;
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${expense.timestamp}</td>
-                    <td>${expense.reason}</td>
-                    <td>₦${expense.amount.toLocaleString()}</td>
-                    <td>
-                        <button onclick="deleteExpense('${expense.id}')" class="secondary">Delete</button>
-                    </td>
-                `;
-            });
-            
-            document.getElementById('dailyExpenseTotal').textContent = dailyTotal.toLocaleString();
-        }
-
-        async function deleteExpense(expenseId) {
-            if (confirm('Are you sure you want to delete this expense?')) {
-                expenses = expenses.filter(e => e.id !== expenseId);
-                await saveAllData();
-                
-                displayExpenses();
-                updateDashboard();
-                alert('Expense deleted successfully!');
-            }
-        }
-
-        function downloadExpensesReport() {
-            if (expenses.length === 0) {
-                alert('No expenses recorded');
-                return;
-            }
-            
-            let csv = 'Date,Reason,Amount,Time\n';
-            
-            expenses.forEach(expense => {
-                csv += `"${expense.date}","${expense.reason}",${expense.amount},"${expense.timestamp}"\n`;
-            });
-            
-            downloadCSV(csv, 'expenses-report.csv');
         }
 
         // Dashboard functions
@@ -2355,46 +1493,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             checkLowStock();
         }
 
-        function updateRecentGoods() {
-            const fromMarketTbody = document.querySelector('#recentGoodsFromMarketTable tbody');
-            fromMarketTbody.innerHTML = '';
-            
-            const recentGoodsFromMarket = goodsFromMarket.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-            
-            if (recentGoodsFromMarket.length === 0) {
-                fromMarketTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No recent goods received</td></tr>';
-            } else {
-                recentGoodsFromMarket.forEach(entry => {
-                    const row = fromMarketTbody.insertRow();
-                    row.innerHTML = `
-                        <td>${entry.date}</td>
-                        <td>${entry.productName}</td>
-                        <td>${entry.quantity}</td>
-                        <td>${entry.supplier}</td>
-                    `;
-                });
-            }
-
-            const toMarketTbody = document.querySelector('#recentGoodsToMarketTable tbody');
-            toMarketTbody.innerHTML = '';
-            
-            const recentGoodsToMarket = goodsToMarket.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-            
-            if (recentGoodsToMarket.length === 0) {
-                toMarketTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No recent goods sent to market</td></tr>';
-            } else {
-                recentGoodsToMarket.forEach(entry => {
-                    const row = toMarketTbody.insertRow();
-                    row.innerHTML = `
-                        <td>${entry.date}</td>
-                        <td>${entry.productName}</td>
-                        <td>${entry.quantity}</td>
-                        <td>${entry.destination}</td>
-                    `;
-                });
-            }
-        }
-
         function checkLowStock() {
             const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
             const alert = document.getElementById('lowStockAlert');
@@ -2406,51 +1504,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
             } else {
                 alert.style.display = 'none';
             }
-        }
-
-        // Report functions
-        function downloadStockReport() {
-            let csv = 'Product Name,Category,Cost Price,Selling Price,Current Stock,Min Stock,Stock Value\n';
-            
-            products.forEach(product => {
-                const stockValue = product.cost * product.stock;
-                csv += `"${product.name}","${product.category}",${product.cost},${product.price},${product.stock},${product.minStock},${stockValue}\n`;
-            });
-            
-            downloadCSV(csv, 'stock-report.csv');
-        }
-
-        function downloadSalesReport() {
-            const today = new Date().toLocaleDateString().replace(/\//g, '-');
-            let csv = 'Date,Product,Quantity,Unit Price,Total,Customer,Payment Method\n';
-            
-            sales.forEach(sale => {
-                csv += `"${sale.timestamp}","${sale.productName}",${sale.quantity},${sale.price},${sale.total},"${sale.customer}","${sale.paymentMethod}"\n`;
-            });
-            
-            downloadCSV(csv, `sales-report-${today}.csv`);
-        }
-
-        function downloadCreditReport() {
-            let csv = 'Date,Customer,Phone,Product,Quantity,Amount,Status\n';
-            
-            credits.forEach(credit => {
-                csv += `"${credit.date}","${credit.customer}","${credit.phone}","${credit.productName}",${credit.quantity},${credit.amount},"${credit.status}"\n`;
-            });
-            
-            downloadCSV(csv, 'credit-report.csv');
-        }
-
-        function downloadCSV(csv, filename) {
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', filename);
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
         }
 
         // Initialize date fields
