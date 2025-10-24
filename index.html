@@ -432,23 +432,49 @@
             margin: 15px 0;
         }
 
-        .reset-section {
-            background: #fff3cd;
+             .data-management-section {
+            background: #e8f4fd;
             padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
-            border: 2px solid #ffeaa7;
+            border: 2px solid #3498db;
         }
 
-        .reset-section h3 {
-            color: #d35400;
+        .data-management-section h3 {
+            color: #2c3e50;
             margin-bottom: 15px;
+            font-size: 1.2em;
         }
 
-        .reset-buttons {
+        .management-buttons {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
+        }
+
+        .management-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .management-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .management-btn.secondary {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+        }
+
+        .management-btn.secondary:hover {
+            background: linear-gradient(45deg, #7f8c8d, #6c7b7d);
         }
     </style>
 </head>
@@ -521,16 +547,16 @@
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
 
-            <!-- Reset Section -->
-            <div class="reset-section">
-                <h3>⚠️ Data Management</h3>
-                <div class="reset-buttons">
-                    <button onclick="showMainResetModal()" class="warning">MAIN RESET</button>
-                    <button onclick="showCreditsResetModal()" class="warning">RESET CREDITS & ORDERS</button>
+                      <!-- Data Management Section -->
+            <div class="data-management-section">
+                <h3>🔧 Data Management</h3>
+                <div class="management-buttons">
+                    <button onclick="showMainResetModal()" class="management-btn">Main Reset</button>
+                    <button onclick="showCreditsResetModal()" class="management-btn secondary">Reset Credits & Orders</button>
                 </div>
-                <p style="margin-top: 10px; font-size: 12px; color: #7d6608;">
-                    MAIN RESET: Clears Sales, Expenses, Goods to/from market, Transfer, POS totals. RETAINS Products, Credits, Goods to Order.<br>
-                    CREDITS RESET: Clears all credit records and goods to order data.
+                <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                    <strong>Main Reset:</strong> Clears Sales, Expenses, Goods data. Retains Products, Credits, Orders.<br>
+                    <strong>Credits Reset:</strong> Clears all credit records and order data.
                 </p>
             </div>
             
@@ -2493,3 +2519,4 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
     </script>
 </body>
 </html>
+
