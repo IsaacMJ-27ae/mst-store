@@ -245,6 +245,14 @@
             background: linear-gradient(45deg, #229954, #27ae60);
         }
         
+        button.warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+        
+        button.warning:hover {
+            background: linear-gradient(45deg, #e67e22, #d35400);
+        }
+        
         .search-box {
             margin-bottom: 20px;
         }
@@ -384,6 +392,64 @@
             background: #e3f2fd;
             border-left: 4px solid #2196f3;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .modal-input {
+            margin: 15px 0;
+        }
+
+        .reset-section {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #ffeaa7;
+        }
+
+        .reset-section h3 {
+            color: #d35400;
+            margin-bottom: 15px;
+        }
+
+        .reset-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -404,12 +470,68 @@
         </div>
     </div>
 
+    <!-- Payment Method Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <h3>Select Payment Method</h3>
+            <p>How was the credit paid?</p>
+            <div class="modal-buttons">
+                <button onclick="completeCreditPayment('cash')" class="success">Cash</button>
+                <button onclick="completeCreditPayment('transfer')" class="success">Transfer</button>
+                <button onclick="completeCreditPayment('pos')" class="success">POS</button>
+                <button onclick="closePaymentModal()" class="secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Reset Modal -->
+    <div id="mainResetModal" class="modal">
+        <div class="modal-content">
+            <h3>Main Reset</h3>
+            <p>Enter password to reset Sales, Expenses, Goods to/from market, Transfer, and POS totals.</p>
+            <p><strong>This will RETAIN: Cash at Hand, Products, Credits, Goods to Order</strong></p>
+            <div class="modal-input">
+                <input type="password" id="mainResetPassword" placeholder="Enter password" style="width: 100%;">
+            </div>
+            <div class="modal-buttons">
+                <button onclick="confirmMainReset()" class="warning">Reset</button>
+                <button onclick="closeMainResetModal()" class="secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credits/Orders Reset Modal -->
+    <div id="creditsResetModal" class="modal">
+        <div class="modal-content">
+            <h3>Reset Credits & Orders</h3>
+            <p>This will reset all Credits and Goods to Order data.</p>
+            <p><strong>This action cannot be undone!</strong></p>
+            <div class="modal-buttons">
+                <button onclick="confirmCreditsReset()" class="warning">Reset Credits & Orders</button>
+                <button onclick="closeCreditsResetModal()" class="secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Application (Hidden until login) -->
     <div id="mainApp">
         <div class="container">
             <div class="app-header">
                 <h1>MST Store Management System</h1>
                 <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+
+            <!-- Reset Section -->
+            <div class="reset-section">
+                <h3>⚠️ Data Management</h3>
+                <div class="reset-buttons">
+                    <button onclick="showMainResetModal()" class="warning">MAIN RESET</button>
+                    <button onclick="showCreditsResetModal()" class="warning">RESET CREDITS & ORDERS</button>
+                </div>
+                <p style="margin-top: 10px; font-size: 12px; color: #7d6608;">
+                    MAIN RESET: Clears Sales, Expenses, Goods to/from market, Transfer, POS totals. RETAINS Products, Credits, Goods to Order.<br>
+                    CREDITS RESET: Clears all credit records and goods to order data.
+                </p>
             </div>
             
             <div class="tabs">
@@ -634,7 +756,6 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                             <th>Total</th>
                             <th>Customer</th>
                             <th>Payment Method</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -986,6 +1107,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
         let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
         let manualOrders = JSON.parse(localStorage.getItem('manualOrders')) || [];
         let editingProductId = null;
+        let currentCreditId = null;
 
         function initApp() {
             updateDashboard();
@@ -1023,6 +1145,123 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 displayGoodsToMarket();
             } else if (tabName === 'expenses') {
                 displayExpenses();
+            }
+        }
+
+        // Reset Functions
+        function showMainResetModal() {
+            document.getElementById('mainResetModal').style.display = 'block';
+        }
+
+        function closeMainResetModal() {
+            document.getElementById('mainResetModal').style.display = 'none';
+            document.getElementById('mainResetPassword').value = '';
+        }
+
+        function confirmMainReset() {
+            const password = document.getElementById('mainResetPassword').value;
+            
+            if (password === 'mstnew8989') {
+                // Reset Sales, Expenses, Goods to/from market
+                sales = [];
+                expenses = [];
+                goodsToMarket = [];
+                goodsFromMarket = [];
+                
+                // Save to localStorage
+                localStorage.setItem('sales', JSON.stringify(sales));
+                localStorage.setItem('expenses', JSON.stringify(expenses));
+                localStorage.setItem('goodsToMarket', JSON.stringify(goodsToMarket));
+                localStorage.setItem('goodsFromMarket', JSON.stringify(goodsFromMarket));
+                
+                // Update displays
+                updateDashboard();
+                displaySales();
+                displayExpenses();
+                displayGoodsToMarket();
+                displayGoodsFromMarket();
+                
+                closeMainResetModal();
+                alert('Main reset completed successfully! Sales, Expenses, and Goods data have been cleared.');
+            } else {
+                alert('Incorrect password! Please enter the correct reset password.');
+            }
+        }
+
+        function showCreditsResetModal() {
+            document.getElementById('creditsResetModal').style.display = 'block';
+        }
+
+        function closeCreditsResetModal() {
+            document.getElementById('creditsResetModal').style.display = 'none';
+        }
+
+        function confirmCreditsReset() {
+            if (confirm('Are you absolutely sure? This will delete ALL credit records and goods to order data!')) {
+                // Reset Credits and Goods to Order
+                credits = [];
+                manualOrders = [];
+                
+                // Save to localStorage
+                localStorage.setItem('credits', JSON.stringify(credits));
+                localStorage.setItem('manualOrders', JSON.stringify(manualOrders));
+                
+                // Update displays
+                updateDashboard();
+                displayCredits();
+                displayGoodsToOrder();
+                
+                closeCreditsResetModal();
+                alert('Credits and Orders reset completed successfully!');
+            }
+        }
+
+        // Credit Payment Flow
+        function showPaymentModal(creditId) {
+            currentCreditId = creditId;
+            document.getElementById('paymentModal').style.display = 'block';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+            currentCreditId = null;
+        }
+
+        function completeCreditPayment(paymentMethod) {
+            if (!currentCreditId) return;
+            
+            const credit = credits.find(c => c.id === currentCreditId);
+            if (credit) {
+                // Create a sale record for the credit payment
+                const sale = {
+                    id: Date.now().toString(),
+                    productName: `Credit Payment - ${credit.productName}`,
+                    quantity: 1,
+                    price: credit.amount,
+                    total: credit.amount,
+                    customer: credit.customer,
+                    paymentMethod: paymentMethod,
+                    timestamp: new Date().toLocaleString(),
+                    date: new Date().toISOString().split('T')[0],
+                    isCreditPayment: true
+                };
+                
+                sales.push(sale);
+                localStorage.setItem('sales', JSON.stringify(sales));
+                
+                // Update credit status
+                credit.status = 'paid';
+                credit.paidDate = new Date().toISOString().split('T')[0];
+                credit.paidMethod = paymentMethod;
+                localStorage.setItem('credits', JSON.stringify(credits));
+                
+                // Update displays
+                displayCredits();
+                displaySales();
+                updateDashboard();
+                
+                closePaymentModal();
+                alert(`Credit marked as paid via ${paymentMethod.toUpperCase()}! Added to today's sales.`);
             }
         }
 
@@ -1385,41 +1624,8 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                     <td>₦${sale.total.toLocaleString()}</td>
                     <td>${sale.customer}</td>
                     <td>${sale.paymentMethod}</td>
-                    <td>
-                        <button onclick="deleteSale('${sale.id}')" class="secondary">Delete</button>
-                    </td>
                 `;
             });
-        }
-
-        function deleteSale(saleId) {
-            if (confirm('Are you sure you want to delete this sale?')) {
-                const sale = sales.find(s => s.id === saleId);
-                
-                if (sale) {
-                    // Restore product stock
-                    const product = products.find(p => p.name === sale.productName);
-                    if (product) {
-                        product.stock += sale.quantity;
-                        localStorage.setItem('products', JSON.stringify(products));
-                    }
-                    
-                    // Remove from credits if it was a credit sale
-                    if (sale.paymentMethod === 'credit') {
-                        credits = credits.filter(c => c.id !== saleId);
-                        localStorage.setItem('credits', JSON.stringify(credits));
-                        displayCredits();
-                    }
-                    
-                    // Remove the sale
-                    sales = sales.filter(s => s.id !== saleId);
-                    localStorage.setItem('sales', JSON.stringify(sales));
-                    
-                    displaySales();
-                    updateDashboard();
-                    alert('Sale deleted successfully!');
-                }
-            }
         }
 
         // Credit management
@@ -1447,22 +1653,10 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                     <td>₦${credit.amount.toLocaleString()}</td>
                     <td>${credit.timestamp}</td>
                     <td>
-                        <button onclick="markCreditPaid('${credit.id}')" class="success">Mark Paid</button>
-                        <button onclick="deleteCredit('${credit.id}')" class="secondary">Delete</button>
+                        <button onclick="showPaymentModal('${credit.id}')" class="success">Mark Paid</button>
                     </td>
                 `;
             });
-        }
-
-        function markCreditPaid(creditId) {
-            const credit = credits.find(c => c.id === creditId);
-            if (credit) {
-                credit.status = 'paid';
-                localStorage.setItem('credits', JSON.stringify(credits));
-                displayCredits();
-                updateDashboard();
-                alert('Credit marked as paid!');
-            }
         }
 
         function deleteCredit(creditId) {
