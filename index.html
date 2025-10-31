@@ -1308,7 +1308,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
             document.getElementById('productCost').value = '';
             document.getElementById('productPrice').value = '';
             document.getElementById('productStock').value = '';
-            document.getElementById('productMinStock').value = '5';
+            document.getElementById('productMinStock').value = '0';
         }
 
         function saveProduct() {
@@ -1319,7 +1319,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                 cost: parseFloat(document.getElementById('productCost').value) || 0,
                 price: parseFloat(document.getElementById('productPrice').value) || 0,
                 stock: parseInt(document.getElementById('productStock').value) || 0,
-                minStock: parseInt(document.getElementById('productMinStock').value) || 5
+                minStock: parseInt(document.getElementById('productMinStock').value) || 0
             };
 
             if (!product.name) {
@@ -1938,7 +1938,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
                     cost: 0, // Will be set later
                     price: 0, // Will be set later
                     stock: quantity,
-                    minStock: 5
+                    minStock: 0
                 };
                 products.push(product);
             }
@@ -2519,5 +2519,6 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
     </script>
 </body>
 </html>
+
 
 
