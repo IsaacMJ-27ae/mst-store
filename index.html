@@ -705,8 +705,8 @@
                         <textarea id="csvData" placeholder="Paste CSV data here...
 Format: Name,Category,Cost,Price,Stock,MinStock
 Example: 
-HP Laptop 15s,Laptops,150000,180000,10,5
-USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
+HP Laptop 15s,Laptops,150000,180000,10,0
+USB-C Cable,General Computer Accessories,500,800,50,0" rows="10"></textarea>
                     </div>
                     <div class="form-group">
                         <label>Or Upload CSV File</label>
@@ -1461,7 +1461,7 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
                             cost: parseFloat(parts[2]) || 0,
                             price: parseFloat(parts[3]) || 0,
                             stock: parseInt(parts[4]) || 0,
-                            minStock: parseInt(parts[5]) || 5
+                            minStock: parseInt(parts[5]) || 0
                         };
                         
                         if (product.name) {
@@ -1488,11 +1488,11 @@ USB-C Cable,General Computer Accessories,500,800,50,10" rows="10"></textarea>
 
         function downloadTemplate() {
             const template = `Name,Category,Cost,Price,Stock,MinStock
-HP Laptop 15s,Laptops,150000,180000,10,5
-USB-C Cable,General Computer Accessories,500,800,50,10
-iPhone Charger,Chargers,1200,1500,25,5
-Laptop Bag,General Computer Accessories,3000,4000,15,3
-HDMI Cable,General Computer Accessories,800,1200,30,5`;
+HP Laptop 15s,Laptops,150000,180000,10,0
+USB-C Cable,General Computer Accessories,500,800,50,0
+iPhone Charger,Chargers,1200,1500,25,0
+Laptop Bag,General Computer Accessories,3000,4000,15,0
+HDMI Cable,General Computer Accessories,800,1200,30,0`;
             
             const blob = new Blob([template], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
@@ -2519,6 +2519,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,5`;
     </script>
 </body>
 </html>
+
 
 
 
