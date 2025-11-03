@@ -1059,19 +1059,47 @@ USB-C Cable,General Computer Accessories,500,800,50,0" rows="10"></textarea>
                 </table>
             </div>
             
-            <!-- Reports Tab -->
-            <div id="reports" class="tab-content">
-                <h3>Reports</h3>
-                <button onclick="downloadStockReport()">Download Stock Report</button>
-                <button onclick="downloadSalesReport()">Download Sales Report</button>
-                <button onclick="downloadCreditReport()">Download Credit Report</button>
-                <button onclick="downloadGoodsToOrderReport()">Download Goods to Order Report</button>
-                <button onclick="downloadGoodsFromMarketReport()">Download Goods from Market Report</button>
-                <button onclick="downloadGoodsToMarketReport()">Download Goods to Market Report</button>
-                <button onclick="downloadExpensesReport()">Download Expenses Report</button>
-            </div>
+          <!-- Reports Tab -->
+<div id="reports" class="tab-content">
+    <h3>Reports</h3>
+    <button onclick="downloadStockReport()">Download Stock Report</button>
+    <button onclick="downloadSalesReport()">Download Sales Report</button>
+    <button onclick="downloadCreditReport()">Download Credit Report</button>
+    <button onclick="downloadGoodsToOrderReport()">Download Goods to Order Report</button>
+    <button onclick="downloadGoodsFromMarketReport()">Download Goods from Market Report</button>
+    <button onclick="downloadGoodsToMarketReport()">Download Goods to Market Report</button>
+    <button onclick="downloadExpensesReport()">Download Expenses Report</button>
+    
+    <!-- Add this new Backup & Recovery Section -->
+    <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin: 20px 0; border: 2px solid #27ae60;">
+        <h3>🔄 Data Backup & Recovery</h3>
+        <p><strong>Always backup your data before making changes!</strong></p>
+        
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0;">
+            <button onclick="exportAllData()" class="success" style="background: linear-gradient(45deg, #27ae60, #2ecc71);">
+                📥 Export All Data (JSON)
+            </button>
+            <button onclick="importAllData()" class="warning" style="background: linear-gradient(45deg, #f39c12, #e67e22);">
+                📤 Import Data Backup
+            </button>
+            <button onclick="checkDataStatus()" class="secondary">
+                🔍 Check Data Status
+            </button>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #ffc107;">
+            <h4>⚠️ Important Notes:</h4>
+            <ul style="text-align: left; margin: 10px 0; padding-left: 20px;">
+                <li>Always export backup before updating code</li>
+                <li>JSON files contain all your store data</li>
+                <li>Import will replace ALL current data</li>
+                <li>Keep backup files safe and secure</li>
+            </ul>
         </div>
     </div>
+</div>
+</div>
+</div>
 
     <script>
         // Login System
@@ -1124,28 +1152,135 @@ USB-C Cable,General Computer Accessories,500,800,50,0" rows="10"></textarea>
             }
         });
 
-        // Stock Management App Code
-        let products = JSON.parse(localStorage.getItem('products')) || [];
-        let sales = JSON.parse(localStorage.getItem('sales')) || [];
-        let credits = JSON.parse(localStorage.getItem('credits')) || [];
-        let goodsToMarket = JSON.parse(localStorage.getItem('goodsToMarket')) || [];
-        let goodsFromMarket = JSON.parse(localStorage.getItem('goodsFromMarket')) || [];
-        let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
-        let manualOrders = JSON.parse(localStorage.getItem('manualOrders')) || [];
-        let editingProductId = null;
-        let currentCreditId = null;
+      // Handle Enter key in login form
+document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        login();
+    }
+});
 
-        function initApp() {
-            updateDashboard();
-            displayProducts();
-            displaySales();
-            displayCredits();
-            displayGoodsToMarket();
-            displayGoodsFromMarket();
-            displayExpenses();
-            displayGoodsToOrder();
-            checkLowStock();
+// Stock Management App Code
+let products = JSON.parse(localStorage.getItem('products')) || [];
+let sales = JSON.parse(localStorage.getItem('sales')) || [];
+let credits = JSON.parse(localStorage.getItem('credits')) || [];
+let goodsToMarket = JSON.parse(localStorage.getItem('goodsToMarket')) || [];
+let goodsFromMarket = JSON.parse(localStorage.getItem('goodsFromMarket')) || [];
+let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+let manualOrders = JSON.parse(localStorage.getItem('manualOrders')) || [];
+let cashAtHand = parseFloat(localStorage.getItem('cashAtHand')) || 0;
+let editingProductId = null;
+let currentCreditId = null;
+
+// Data Backup & Recovery Functions
+function exportAllData() {
+    const allData = {
+        exportDate: new Date().toISOString(),
+        version: '1.0',
+        data: {
+            products: JSON.parse(localStorage.getItem('products')) || [],
+            sales: JSON.parse(localStorage.getItem('sales')) || [],
+            credits: JSON.parse(localStorage.getItem('credits')) || [],
+            goodsToMarket: JSON.parse(localStorage.getItem('goodsToMarket')) || [],
+            goodsFromMarket: JSON.parse(localStorage.getItem('goodsFromMarket')) || [],
+            expenses: JSON.parse(localStorage.getItem('expenses')) || [],
+            manualOrders: JSON.parse(localStorage.getItem('manualOrders')) || [],
+            cashAtHand: localStorage.getItem('cashAtHand') || '0'
         }
+    };
+    
+    const dataStr = JSON.stringify(allData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mst-store-backup-' + new Date().toISOString().split('T')[0] + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert('All data exported successfully! File: ' + a.download);
+}
+
+function importAllData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const allData = JSON.parse(e.target.result);
+                
+                if (!allData.data) {
+                    alert('Invalid backup file format!');
+                    return;
+                }
+                
+                if (confirm('This will replace ALL current data. Are you sure?')) {
+                    // Restore all data
+                    localStorage.setItem('products', JSON.stringify(allData.data.products || []));
+                    localStorage.setItem('sales', JSON.stringify(allData.data.sales || []));
+                    localStorage.setItem('credits', JSON.stringify(allData.data.credits || []));
+                    localStorage.setItem('goodsToMarket', JSON.stringify(allData.data.goodsToMarket || []));
+                    localStorage.setItem('goodsFromMarket', JSON.stringify(allData.data.goodsFromMarket || []));
+                    localStorage.setItem('expenses', JSON.stringify(allData.data.expenses || []));
+                    localStorage.setItem('manualOrders', JSON.stringify(allData.data.manualOrders || []));
+                    localStorage.setItem('cashAtHand', allData.data.cashAtHand || '0');
+                    
+                    alert('Data restored successfully! Refreshing page...');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                }
+            } catch (error) {
+                alert('Error restoring data: ' + error.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+function checkDataStatus() {
+    const dataTypes = ['products', 'sales', 'credits', 'goodsToMarket', 'goodsFromMarket', 'expenses', 'manualOrders'];
+    let status = 'Data Status:\n\n';
+    
+    dataTypes.forEach(type => {
+        const data = JSON.parse(localStorage.getItem(type)) || [];
+        status += `${type}: ${data.length} records\n`;
+    });
+    
+    alert(status);
+}
+
+function checkAndRecoverData() {
+    const hasData = localStorage.getItem('products') || 
+                   localStorage.getItem('sales') || 
+                   localStorage.getItem('credits');
+    
+    if (!hasData) {
+        if (confirm('No data found! Would you like to import a backup file?')) {
+            importAllData();
+        }
+    }
+}
+
+      function initApp() {
+    checkAndRecoverData();
+    updateDashboard();
+    displayProducts();
+    displaySales();
+    displayCredits();
+    displayGoodsToMarket();
+    displayGoodsFromMarket();
+    displayExpenses();
+    displayGoodsToOrder();
+    checkLowStock();
+}
 
         // Tab switching
         function switchTab(tabName) {
@@ -2532,6 +2667,7 @@ function updateDashboard() {
     </script>
 </body>
 </html>
+
 
 
 
