@@ -2048,75 +2048,178 @@ resetSaleForm();
             document.getElementById('receivedNotes').value = '';
         }
 
-        function saveGoodsFromMarket() {
-            const productName = document.getElementById('receivedProductName').value;
-            const category = document.getElementById('receivedProductCategory').value;
-            const supplier = document.getElementById('receivedSupplier').value;
-            const quantity = parseInt(document.getElementById('receivedQuantity').value) || 0;
-            const date = document.getElementById('receivedDate').value;
-            const notes = document.getElementById('receivedNotes').value;
-            
-            if (!productName) {
-                alert('Please enter product name');
-                return;
-            }
-            
-            if (!category) {
-                alert('Please select category');
-                return;
-            }
-            
-            if (!supplier) {
-                alert('Please enter supplier name');
-                return;
-            }
-            
-            if (quantity <= 0) {
-                alert('Please enter a valid quantity');
-                return;
-            }
-            
-            // Check if product already exists
-            let product = products.find(p => p.name.toLowerCase() === productName.toLowerCase() && p.category === category);
-            
-            if (product) {
-                // Update existing product stock
-                product.stock += quantity;
-            } else {
-                // Create new product
-                product = {
-                    id: Date.now().toString(),
-                    name: productName,
-                    category: category,
-                    cost: 0, // Will be set later
-                    price: 0, // Will be set later
-                    stock: quantity,
-                    minStock: 0
-                };
-                products.push(product);
-            }
-            
-            const goodsEntry = {
-                id: Date.now().toString(),
-                productName: productName,
-                category: category,
-                supplier: supplier,
-                quantity: quantity,
-                date: date,
-                notes: notes,
-                timestamp: new Date().toLocaleString()
-            };
-            
-            goodsFromMarket.push(goodsEntry);
-            localStorage.setItem('goodsFromMarket', JSON.stringify(goodsFromMarket));
-            localStorage.setItem('products', JSON.stringify(products));
-            
-            displayGoodsFromMarket();
-            hideGoodsFromMarketForm();
-            updateDashboard();
-            displayProducts();
-            alert(`Goods received recorded successfully! ${productName} added to ${category} category.`);
-        }
+       // Add this function for product search in goods from market
+function searchGoodsFromMarketProducts() {
+    const searchTerm = document.getElementById('receivedProductName').value.toLowerCase();
+    const list = document.getElementById('goodsFromMarketProductsList');
+    
+    if (!list) {
+        // Create the dropdown list if it doesn't exist
+        const newList = document.createElement('div');
+        newList.id = 'goodsFromMarketProductsList';
+        newList.style.cssText = 'max-height: 150px; overflow-y: auto; border: 1px solid #ddd; background: white; position: absolute; z-index: 1000; width: 100%; display: none;';
+        document.getElementById('receivedProductName').parentNode.appendChild(newList);
+    }
+    
+    const existingList = document.getElementById('goodsFromMarketProductsList');
+    
+    if (searchTerm.length < 1) {
+        existingList.style.display = 'none';
+        existingList.innerHTML = '';
+        return;
+    }
+    
+    const filtered = products.filter(p => 
+        p.name.toLowerCase().includes(searchTerm)
+    );
+    
+    existingList.innerHTML = '';
+    
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.style.padding = '8px';
+        div.style.color = '#666';
+        div.textContent = 'No matching products found - will create new product';
+        existingList.appendChild(div);
+    } else {
+        filtered.forEach(product => {
+            const div = document.createElement('div');
+            div.style.padding = '8px';
+            div.style.borderBottom = '1px solid #eee';
+            div.style.cursor = 'pointer';
+            div.innerHTML = `
+                <strong>${product.name}</strong> - ${product.category} (Current Stock: ${product.stock})
+            `;
+            div.onclick = () => selectProductForGoodsFromMarket(product);
+            existingList.appendChild(div);
+        });
+    }
+    
+    existingList.style.display = 'block';
+}
+
+function selectProductForGoodsFromMarket(product) {
+    document.getElementById('receivedProductName').value = product.name;
+    document.getElementById('receivedProductCategory').value = product.category;
+    document.getElementById('goodsFromMarketProductsList').style.display = 'none';
+    document.getElementById('goodsFromMarketProductsList').innerHTML = '';
+}
+
+function saveGoodsFromMarket() {
+    const productName = document.getElementById('receivedProductName').value;
+    const category = document.getElementById('receivedProductCategory').value;
+    const supplier = document.getElementById('receivedSupplier').value;
+    const quantity = parseInt(document.getElementById('receivedQuantity').value) || 0;
+    const date = document.getElementById('receivedDate').value;
+    const notes = document.getElementById('receivedNotes').value;
+    
+    if (!productName) {
+        alert('Please enter product name');
+        return;
+    }
+    
+    if (!category) {
+        alert('Please select category');
+        return;
+    }
+    
+    if (!supplier) {
+        alert('Please enter supplier name');
+        return;
+    }
+    
+    if (quantity <= 0) {
+        alert('Please enter a valid quantity');
+        return;
+    }
+    
+    // Check if product already exists (case insensitive)
+    let product = products.find(p => 
+        p.name.toLowerCase() === productName.toLowerCase() && 
+        p.category === category
+    );
+    
+    let isNewProduct = false;
+    
+    if (product) {
+        // Update existing product stock
+        const oldStock = product.stock;
+        product.stock += quantity;
+        alert(`Product "${product.name}" found! Stock updated from ${oldStock} to ${product.stock}`);
+    } else {
+        // Create new product
+        product = {
+            id: Date.now().toString(),
+            name: productName,
+            category: category,
+            cost: 0, // Can be set later
+            price: 0, // Can be set later
+            stock: quantity,
+            minStock: 0
+        };
+        products.push(product);
+        isNewProduct = true;
+        alert(`New product "${productName}" created in ${category} category with initial stock of ${quantity}`);
+    }
+    
+    // Create goods from market entry
+    const goodsEntry = {
+        id: Date.now().toString(),
+        productName: productName,
+        category: category,
+        supplier: supplier,
+        quantity: quantity,
+        date: date,
+        notes: notes,
+        timestamp: new Date().toLocaleString(),
+        isNewProduct: isNewProduct,
+        previousStock: isNewProduct ? 0 : (product.stock - quantity) // Track previous stock for existing products
+    };
+    
+    goodsFromMarket.push(goodsEntry);
+    localStorage.setItem('goodsFromMarket', JSON.stringify(goodsFromMarket));
+    localStorage.setItem('products', JSON.stringify(products));
+    
+    displayGoodsFromMarket();
+    hideGoodsFromMarketForm();
+    updateDashboard();
+    displayProducts();
+}
+
+// Also update the showGoodsFromMarketForm function to include the search functionality
+function showGoodsFromMarketForm() {
+    document.getElementById('goodsFromMarketForm').style.display = 'block';
+    // Set default date to today
+    document.getElementById('receivedDate').value = new Date().toISOString().split('T')[0];
+    
+    // Add event listener for product search
+    setTimeout(() => {
+        const productInput = document.getElementById('receivedProductName');
+        productInput.addEventListener('input', searchGoodsFromMarketProducts);
+        productInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                const list = document.getElementById('goodsFromMarketProductsList');
+                if (list) list.style.display = 'none';
+            }, 200);
+        });
+    }, 100);
+}
+
+// Update the reset function to clear the search list
+function resetGoodsFromMarketForm() {
+    document.getElementById('receivedProductName').value = '';
+    document.getElementById('receivedProductCategory').value = '';
+    document.getElementById('receivedSupplier').value = '';
+    document.getElementById('receivedQuantity').value = '';
+    document.getElementById('receivedDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('receivedNotes').value = '';
+    
+    const list = document.getElementById('goodsFromMarketProductsList');
+    if (list) {
+        list.innerHTML = '';
+        list.style.display = 'none';
+    }
+}
 
         function displayGoodsFromMarket() {
             const tbody = document.querySelector('#goodsFromMarketTable tbody');
@@ -2679,6 +2782,7 @@ cashAtHand = Math.max(0, cashAtHand);
     </script>
 </body>
 </html>
+
 
 
 
