@@ -476,6 +476,36 @@
         .management-btn.secondary:hover {
             background: linear-gradient(45deg, #7f8c8d, #6c7b7d);
         }
+                .management-btn.secondary:hover {
+            background: linear-gradient(45deg, #7f8c8d, #6c7b7d);
+        }
+
+        /* Chatbot Styles */
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .bot-message {
+            background: white;
+            border: 1px solid #e9ecef;
+            align-self: flex-start;
+        }
+
+        .user-message {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        #chatMessages {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
     </style>
 </head>
 <body>
@@ -2794,12 +2824,163 @@ function updateDashboard() {
             a.click();
             document.body.removeChild(a);
         }
+        // Check login status on page load
+        document.addEventListener('DOMContentLoaded', checkLogin);
 
+        // AI Chatbot Functions
+        function toggleChatbot() {
+            const chatbotWindow = document.getElementById('chatbotWindow');
+            const chatbotButton = document.querySelector('#chatbotContainer button');
+            
+            if (chatbotWindow.style.display === 'none') {
+                chatbotWindow.style.display = 'flex';
+                chatbotButton.style.display = 'none';
+            } else {
+                chatbotWindow.style.display = 'none';
+                chatbotButton.style.display = 'block';
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Process and get AI response
+            setTimeout(() => {
+                const response = getAIResponse(message);
+                addMessage(response, 'bot');
+            }, 500);
+        }
+
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.innerHTML = `<strong>${sender === 'user' ? 'You' : 'MST Assistant'}:</strong> ${text}`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function getAIResponse(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+            
+            // System Knowledge Base
+            const knowledge = {
+                // Login & Access
+                'login': 'The system has two users: MSTboss (password: gbenga8989) and MSTsecretary (password: loginSec8989). Login is required to access all features.',
+                'password': 'Passwords: MSTboss uses "gbenga8989", MSTsecretary uses "loginSec8989". Reset password for main reset is "mstnew8989".',
+                'access': 'You need to login first. Use either MSTboss or MSTsecretary credentials.',
+                
+                // Products
+                'add product': 'Go to Products tab → Click "Add New Product" → Fill details (Name, Category, Cost, Price, Stock) → Click "Save Product".',
+                'edit product': 'In Products tab, click "Edit" button next to any product, modify details, then "Save Product".',
+                'delete product': 'In Products tab, click "Delete" button next to product. This cannot be undone!',
+                'import products': 'In Products tab → "Bulk Import Products" → Paste CSV data or upload file → "Import Products". CSV format: Name,Category,Cost,Price,Stock,MinStock',
+                'category': 'Available categories: Laptops, Laptop Batteries, Chargers, Storage Devices, Printer/Printer Accessories, Network Devices, Laptop Keyboard Replacement, General Computer Accessories.',
+                'low stock': 'Low stock items automatically appear in "Goods to Order" tab. System alerts when stock ≤ minimum stock.',
+                
+                // Sales
+                'sell': 'Go to Sales tab → Search product → Enter quantity → Set price → Select payment method → "Add to Sale". For credit sales, enter customer phone.',
+                'credit sale': 'In Sales tab, select "Credit" payment method → Enter customer phone number → Complete sale. Credit appears in Credits tab until paid.',
+                'text price': 'You can type text in price field (like "Free", "Warranty"). Payment method becomes optional, stock is deducted, but no financial calculation.',
+                'payment method': 'Available: Cash, Transfer, POS, Credit. Credit requires customer phone number.',
+                'today sales': 'View today\'s sales in Sales tab. Text price sales show "Text Price" and "N/A" for total.',
+                
+                // Credits
+                'credit': 'Pending credits show in Credits tab. Click "Mark Paid" to record payment via Cash, Transfer, or POS.',
+                'mark paid': 'In Credits tab, click "Mark Paid" next to credit → Select payment method → Credit is recorded as sale.',
+                
+                // Inventory Management
+                'goods to order': 'Automatic: Low stock items. Manual: Add custom orders with supplier details.',
+                'goods from market': 'Record received goods → Updates product stock. Can create new products.',
+                'goods to market': 'Record goods sent to other locations → Deducts from stock.',
+                'supplier': 'When adding goods from market or manual orders, always record supplier name.',
+                
+                // Expenses
+                'expense': 'Go to Expenses tab → Enter reason and amount → "Add Expense". Shows in dashboard calculations.',
+                
+                // Dashboard
+                'dashboard': 'Shows: Total Sales, Total Transfer, Total POS, Total Expenses, Cash at Hand, Pending Credits. Cash = Sales - (Transfer + POS + Expenses).',
+                'cash calculation': 'Cash at Hand = Total Sales - (Total Transfer + Total POS + Total Expenses). Text prices and credit payments are excluded.',
+                
+                // Data Management
+                'reset': 'Data Management section has two resets: Main Reset (clears sales, expenses, goods data) and Credits Reset (clears credits and orders).',
+                'main reset': 'Clears: Sales, Expenses, Goods to/from Market. Retains: Products, Credits, Orders. Password: mstnew8989',
+                'backup': 'Always backup before changes! Go to Reports tab → "Export All Data (JSON)". Import replaces ALL current data.',
+                'export': 'In Reports tab, use "Export All Data (JSON)" to backup everything. Keep file safe!',
+                
+                // Reports
+                'report': 'Reports tab has: Stock, Sales, Credit, Goods to Order, Goods from Market, Goods to Market, Expenses reports. Download as CSV.',
+                'download report': 'All reports can be downloaded as CSV files from Reports tab for Excel analysis.',
+                
+                // General
+                'help': 'I can help with: Login, Products, Sales, Credits, Inventory, Expenses, Dashboard, Data Management, Reports. Just ask!',
+                'how to': 'Tell me what you want to do: add product, record sale, check credits, manage inventory, etc.',
+                'what can you do': 'I know everything about this MST Store system! Ask about any feature, process, or problem.'
+            };
+            
+            // Find best matching response
+            for (const [key, response] of Object.entries(knowledge)) {
+                if (lowerMessage.includes(key)) {
+                    return response;
+                }
+            }
+            
+            // Default responses for common questions
+            if (lowerMessage.includes('how') || lowerMessage.includes('where') || lowerMessage.includes('what')) {
+                return 'I can help you with that! Please be more specific. For example: "How to add a product?" or "Where do I record sales?"';
+            }
+            
+            if (lowerMessage.includes('why') || lowerMessage.includes('problem') || lowerMessage.includes('error')) {
+                return 'Let me help you troubleshoot. Please describe the issue you\'re experiencing in more detail.';
+            }
+            
+            return 'I\'m not sure I understand. Try asking about: adding products, recording sales, managing credits, inventory, expenses, or reports. Or say "help" for more options.';
+        }
+
+        // Handle Enter key in chat
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+        });
+    </script>
         // Check login status on page load
         document.addEventListener('DOMContentLoaded', checkLogin);
     </script>
+    <!-- AI Chatbot -->
+<div id="chatbotContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    <div id="chatbotWindow" style="display: none; width: 350px; height: 500px; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); flex-direction: column;">
+        <div style="background: linear-gradient(45deg, #3498db, #2980b9); color: white; padding: 15px; border-radius: 15px 15px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0;">MST Store Assistant</h4>
+            <button onclick="toggleChatbot()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">×</button>
+        </div>
+        <div id="chatMessages" style="flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa;">
+            <div class="message bot-message">
+                <strong>MST Assistant:</strong> Hello! I'm your MST Store assistant. I know everything about this system. How can I help you today?
+            </div>
+        </div>
+        <div style="padding: 15px; border-top: 1px solid #e9ecef;">
+            <input type="text" id="chatInput" placeholder="Ask me anything about the system..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 25px; outline: none;">
+            <button onclick="sendMessage()" style="background: linear-gradient(45deg, #3498db, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 15px; margin-top: 10px; cursor: pointer;">Send</button>
+        </div>
+    </div>
+    <button onclick="toggleChatbot()" style="background: linear-gradient(45deg, #3498db, #2980b9); color: white; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);">🤖</button>
+</div>
 </body>
 </html>
+
 
 
 
