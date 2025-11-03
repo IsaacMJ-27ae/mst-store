@@ -639,23 +639,23 @@
                         <button onclick="showProductForm()">Add New Product</button>
                         <button onclick="showImportForm()" class="success">Bulk Import Products</button>
                     </div>
-                    <div class="search-box">
-                        <input type="text" id="productSearch" placeholder="Search products..." onkeyup="searchProducts()">
-                    </div>
-                    <div class="filter-group">
-                        <label>Filter by Category</label>
-                        <select id="categoryFilter" onchange="filterProductsByCategory()">
-                            <option value="">All Categories</option>
-                            <option value="Laptops">Laptops</option>
-                            <option value="Laptop Batteries">Laptop Batteries</option>
-                            <option value="Chargers">Chargers</option>
-                            <option value="Storage Devices">Storage Devices</option>
-                            <option value="Printer/Printer Accessories">Printer/Printer Accessories</option>
-                            <option value="Network Devices">Network Devices</option>
-                            <option value="Laptop Keyboard Replacement">Laptop Keyboard Replacement</option>
-                            <option value="General Computer Accessories">General Computer Accessories</option>
-                        </select>
-                    </div>
+                   <div class="search-box">
+    <input type="text" id="productSearch" placeholder="Search products..." onkeyup="filterProducts()">
+</div>
+<div class="filter-group">
+    <label>Filter by Category</label>
+    <select id="categoryFilter" onchange="filterProducts()">
+        <option value="">All Categories</option>
+        <option value="Laptops">Laptops</option>
+        <option value="Laptop Batteries">Laptop Batteries</option>
+        <option value="Chargers">Chargers</option>
+        <option value="Storage Devices">Storage Devices</option>
+        <option value="Printer/Printer Accessories">Printer/Printer Accessories</option>
+        <option value="Network Devices">Network Devices</option>
+        <option value="Laptop Keyboard Replacement">Laptop Keyboard Replacement</option>
+        <option value="General Computer Accessories">General Computer Accessories</option>
+    </select>
+</div>
                 </div>
                 
                 <div id="productForm" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
@@ -1529,29 +1529,37 @@ function saveProduct() {
             });
         }
 
-        function searchProducts() {
-            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('#productsTable tbody tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
+       function filterProducts() {
+    const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+    const rows = document.querySelectorAll('#productsTable tbody tr');
+    
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const productName = row.cells[0].textContent.toLowerCase();
+        const productCategory = row.cells[1].textContent;
+        
+        // Check if row matches both filters
+        const matchesSearch = !searchTerm || productName.includes(searchTerm);
+        const matchesCategory = !category || productCategory === category;
+        
+        if (matchesSearch && matchesCategory) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
         }
+    });
+}
 
-        function filterProductsByCategory() {
-            const category = document.getElementById('categoryFilter').value;
-            const rows = document.querySelectorAll('#productsTable tbody tr');
-            
-            rows.forEach(row => {
-                const productCategory = row.cells[1].textContent;
-                if (!category || productCategory === category) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
+function searchProducts() {
+    filterProducts();
+}
+
+function filterProductsByCategory() {
+    filterProducts();
+}
 
         // Bulk import functions
         function showImportForm() {
@@ -2790,6 +2798,7 @@ cashAtHand = Math.max(0, cashAtHand);
     </script>
 </body>
 </html>
+
 
 
 
