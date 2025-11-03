@@ -2105,86 +2105,6 @@ function selectProductForGoodsFromMarket(product) {
     document.getElementById('goodsFromMarketProductsList').innerHTML = '';
 }
 
-function saveGoodsFromMarket() {
-    const productName = document.getElementById('receivedProductName').value;
-    const category = document.getElementById('receivedProductCategory').value;
-    const supplier = document.getElementById('receivedSupplier').value;
-    const quantity = parseInt(document.getElementById('receivedQuantity').value) || 0;
-    const date = document.getElementById('receivedDate').value;
-    const notes = document.getElementById('receivedNotes').value;
-    
-    if (!productName) {
-        alert('Please enter product name');
-        return;
-    }
-    
-    if (!category) {
-        alert('Please select category');
-        return;
-    }
-    
-    if (!supplier) {
-        alert('Please enter supplier name');
-        return;
-    }
-    
-    if (quantity <= 0) {
-        alert('Please enter a valid quantity');
-        return;
-    }
-    
-    // Check if product already exists (case insensitive)
-    let product = products.find(p => 
-        p.name.toLowerCase() === productName.toLowerCase() && 
-        p.category === category
-    );
-    
-    let isNewProduct = false;
-    
-    if (product) {
-        // Update existing product stock
-        const oldStock = product.stock;
-        product.stock += quantity;
-        alert(`Product "${product.name}" found! Stock updated from ${oldStock} to ${product.stock}`);
-    } else {
-        // Create new product
-        product = {
-            id: Date.now().toString(),
-            name: productName,
-            category: category,
-            cost: 0, // Can be set later
-            price: 0, // Can be set later
-            stock: quantity,
-            minStock: 0
-        };
-        products.push(product);
-        isNewProduct = true;
-        alert(`New product "${productName}" created in ${category} category with initial stock of ${quantity}`);
-    }
-    
-    // Create goods from market entry
-    const goodsEntry = {
-        id: Date.now().toString(),
-        productName: productName,
-        category: category,
-        supplier: supplier,
-        quantity: quantity,
-        date: date,
-        notes: notes,
-        timestamp: new Date().toLocaleString(),
-        isNewProduct: isNewProduct,
-        previousStock: isNewProduct ? 0 : (product.stock - quantity) // Track previous stock for existing products
-    };
-    
-    goodsFromMarket.push(goodsEntry);
-    localStorage.setItem('goodsFromMarket', JSON.stringify(goodsFromMarket));
-    localStorage.setItem('products', JSON.stringify(products));
-    
-    displayGoodsFromMarket();
-    hideGoodsFromMarketForm();
-    updateDashboard();
-    displayProducts();
-}
 
 // Also update the showGoodsFromMarketForm function to include the search functionality
 function showGoodsFromMarketForm() {
@@ -2782,6 +2702,7 @@ cashAtHand = Math.max(0, cashAtHand);
     </script>
 </body>
 </html>
+
 
 
 
