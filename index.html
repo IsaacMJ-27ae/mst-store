@@ -1510,47 +1510,36 @@ function saveProduct() {
         }
 
         function displayProducts() {
-            const tbody = document.querySelector('#productsTable tbody');
-            tbody.innerHTML = '';
-            
-            products.forEach(product => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${product.name}</td>
-                    <td>${product.category}</td>
-                    <td>₦${product.cost.toLocaleString()}</td>
-                    <td>₦${product.price.toLocaleString()}</td>
-                    <td class="${product.stock <= product.minStock ? 'low-stock' : ''}">${product.stock}</td>
-                    <td>
-                        <button onclick="editProduct('${product.id}')">Edit</button>
-                        <button onclick="deleteProduct('${product.id}')" class="secondary">Delete</button>
-                    </td>
-                `;
-            });
-        }
-
-       function filterProducts() {
+    const tbody = document.querySelector('#productsTable tbody');
+    tbody.innerHTML = '';
+    
     const searchTerm = document.getElementById('productSearch').value.toLowerCase();
     const category = document.getElementById('categoryFilter').value;
-    const rows = document.querySelectorAll('#productsTable tbody tr');
     
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        const productName = row.cells[0].textContent.toLowerCase();
-        const productCategory = row.cells[1].textContent;
-        
-        // Check if row matches both filters
-        const matchesSearch = !searchTerm || productName.includes(searchTerm);
-        const matchesCategory = !category || productCategory === category;
-        
-        if (matchesSearch && matchesCategory) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
+    const filteredProducts = products.filter(product => {
+        const matchesSearch = !searchTerm || product.name.toLowerCase().includes(searchTerm);
+        const matchesCategory = !category || product.category === category;
+        return matchesSearch && matchesCategory;
     });
+    
+    filteredProducts.forEach(product => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${product.name}</td>
+            <td>${product.category}</td>
+            <td>₦${product.cost.toLocaleString()}</td>
+            <td>₦${product.price.toLocaleString()}</td>
+            <td class="${product.stock <= product.minStock ? 'low-stock' : ''}">${product.stock}</td>
+            <td>
+                <button onclick="editProduct('${product.id}')">Edit</button>
+                <button onclick="deleteProduct('${product.id}')" class="secondary">Delete</button>
+            </td>
+        `;
+    });
+}
+
+function filterProducts() {
+    displayProducts();
 }
 
 function searchProducts() {
@@ -2798,6 +2787,7 @@ cashAtHand = Math.max(0, cashAtHand);
     </script>
 </body>
 </html>
+
 
 
 
