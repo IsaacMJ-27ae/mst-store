@@ -1254,42 +1254,45 @@ USB-C Cable,General Computer Accessories,500,800,50,0" rows="10"></textarea>
         }
 
         function completeCreditPayment(paymentMethod) {
-            if (!currentCreditId) return;
-            
-            const credit = credits.find(c => c.id === currentCreditId);
-            if (credit) {
-                // Create a sale record for the credit payment
-                const sale = {
-                    id: Date.now().toString(),
-                    productName: `Credit Payment - ${credit.productName}`,
-                    quantity: 1,
-                    price: credit.amount,
-                    total: credit.amount,
-                    customer: credit.customer,
-                    paymentMethod: paymentMethod,
-                    timestamp: new Date().toLocaleString(),
-                    date: new Date().toISOString().split('T')[0],
-                    isCreditPayment: true
-                };
-                
-                sales.push(sale);
-                localStorage.setItem('sales', JSON.stringify(sales));
-                
-                // Update credit status
-                credit.status = 'paid';
-                credit.paidDate = new Date().toISOString().split('T')[0];
-                credit.paidMethod = paymentMethod;
-                localStorage.setItem('credits', JSON.stringify(credits));
-                
-                // Update displays
-                displayCredits();
-                displaySales();
-                updateDashboard();
-                
-                closePaymentModal();
-                alert(`Credit marked as paid via ${paymentMethod.toUpperCase()}! Added to today's sales.`);
-            }
-        }
+    if (!currentCreditId) return;
+    
+    const credit = credits.find(c => c.id === currentCreditId);
+    if (credit) {
+        // Create a sale record for the credit payment ONLY when payment is received
+        const sale = {
+            id: Date.now().toString(),
+            productName: `Credit Payment - ${credit.productName}`,
+            quantity: 1,
+            price: credit.amount,
+            total: credit.amount,
+            customer: credit.customer,
+            paymentMethod: paymentMethod,
+            timestamp: new Date().toLocaleString(),
+            date: new Date().toISOString().split('T')[0],
+            isCreditPayment: true,
+            originalCreditId: credit.id
+        };
+        
+        // Add to sales only when payment is received
+        sales.push(sale);
+        localStorage.setItem('sales', JSON.stringify(sales));
+        
+        // Update credit status
+        credit.status = 'paid';
+        credit.paidDate = new Date().toISOString().split('T')[0];
+        credit.paidMethod = paymentMethod;
+        credit.paidTimestamp = new Date().toLocaleString();
+        localStorage.setItem('credits', JSON.stringify(credits));
+        
+        // Update displays
+        displayCredits();
+        displaySales();
+        updateDashboard();
+        
+        closePaymentModal();
+        alert(`Credit marked as paid via ${paymentMethod.toUpperCase()}! Added to today's sales.`);
+    }
+}
 
         // Product management
         function showProductForm() {
@@ -1548,79 +1551,81 @@ HDMI Cable,General Computer Accessories,800,1200,30,0`;
             }
         }
 
-        function addSaleItem() {
-            const productName = document.getElementById('saleSearch').value;
-            const quantity = parseInt(document.getElementById('saleQuantity').value) || 1;
-            const price = parseFloat(document.getElementById('salePrice').value) || 0;
-            const customer = document.getElementById('saleCustomer').value || 'Walk-in';
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            const customerPhone = document.getElementById('saleCustomerPhone').value;
-            
-            if (!productName) {
-                alert('Please select a product');
-                return;
-            }
-            
-            if (price <= 0) {
-                alert('Please enter a valid price');
-                return;
-            }
+function addSaleItem() {
+    const productName = document.getElementById('saleSearch').value;
+    const quantity = parseInt(document.getElementById('saleQuantity').value) || 1;
+    const price = parseFloat(document.getElementById('salePrice').value) || 0;
+    const customer = document.getElementById('saleCustomer').value || 'Walk-in';
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const customerPhone = document.getElementById('saleCustomerPhone').value;
+    
+    if (!productName) {
+        alert('Please select a product');
+        return;
+    }
+    
+    if (price <= 0) {
+        alert('Please enter a valid price');
+        return;
+    }
 
-            if (!paymentMethod) {
-                alert('Please select payment method');
-                return;
-            }
-            
-            // Validate phone number for credit sales
-            if (paymentMethod === 'credit' && !customerPhone) {
-                alert('Please enter customer phone number for credit sales');
-                return;
-            }
-            
-            const sale = {
-                id: Date.now().toString(),
-                productName,
-                quantity,
-                price,
-                total: quantity * price,
-                customer,
-                paymentMethod: paymentMethod,
-                timestamp: new Date().toLocaleString(),
-                date: new Date().toISOString().split('T')[0]
-            };
-            
-            sales.push(sale);
-            localStorage.setItem('sales', JSON.stringify(sales));
-            
-            // If it's a credit sale, add to credits
-            if (paymentMethod === 'credit') {
-                const credit = {
-                    id: sale.id,
-                    customer: customer,
-                    phone: customerPhone,
-                    productName: productName,
-                    quantity: quantity,
-                    amount: sale.total,
-                    date: sale.date,
-                    timestamp: sale.timestamp,
-                    status: 'pending'
-                };
-                credits.push(credit);
-                localStorage.setItem('credits', JSON.stringify(credits));
-                displayCredits();
-            }
-            
-            // Update product stock
-            const product = products.find(p => p.name === productName);
-            if (product) {
-                product.stock -= quantity;
-                localStorage.setItem('products', JSON.stringify(products));
-            }
-            
-            displaySales();
-            updateDashboard();
-            resetSaleForm();
-        }
+    if (!paymentMethod) {
+        alert('Please select payment method');
+        return;
+    }
+    
+    // Validate phone number for credit sales
+    if (paymentMethod === 'credit' && !customerPhone) {
+        alert('Please enter customer phone number for credit sales');
+        return;
+    }
+    
+    const saleId = Date.now().toString();
+    
+    if (paymentMethod === 'credit') {
+        // For credit sales: ONLY add to credits, NOT to sales
+        const credit = {
+            id: saleId,
+            customer: customer,
+            phone: customerPhone,
+            productName: productName,
+            quantity: quantity,
+            amount: quantity * price,
+            date: new Date().toISOString().split('T')[0],
+            timestamp: new Date().toLocaleString(),
+            status: 'pending'
+        };
+        credits.push(credit);
+        localStorage.setItem('credits', JSON.stringify(credits));
+        displayCredits();
+    } else {
+        // For non-credit sales: add to sales as normal
+        const sale = {
+            id: saleId,
+            productName,
+            quantity,
+            price,
+            total: quantity * price,
+            customer,
+            paymentMethod: paymentMethod,
+            timestamp: new Date().toLocaleString(),
+            date: new Date().toISOString().split('T')[0]
+        };
+        sales.push(sale);
+        localStorage.setItem('sales', JSON.stringify(sales));
+        displaySales();
+    }
+    
+    // Update product stock for both credit and non-credit sales
+    const product = products.find(p => p.name === productName);
+    if (product) {
+        product.stock -= quantity;
+        localStorage.setItem('products', JSON.stringify(products));
+    }
+    
+    updateDashboard();
+    resetSaleForm();
+}
 
         function resetSaleForm() {
             document.getElementById('saleSearch').value = '';
@@ -2362,54 +2367,62 @@ HDMI Cable,General Computer Accessories,800,1200,30,0`;
         }
 
         // Dashboard functions
-        function updateDashboard() {
-            const today = new Date().toDateString();
-            
-            // Calculate daily totals
-            const todaySales = sales.filter(sale => new Date(sale.timestamp).toDateString() === today);
-            const todayExpenses = expenses.filter(expense => new Date(expense.timestamp).toDateString() === today);
-            
-            // Total Sales (all payment methods)
-            const totalSales = todaySales.reduce((sum, sale) => sum + sale.total, 0);
-            
-            // Total Transfer
-            const totalTransfer = todaySales
-                .filter(sale => sale.paymentMethod === 'transfer')
-                .reduce((sum, sale) => sum + sale.total, 0);
-            
-            // Total POS
-            const totalPOS = todaySales
-                .filter(sale => sale.paymentMethod === 'pos')
-                .reduce((sum, sale) => sum + sale.total, 0);
-            
-            // Total Expenses
-            const totalExpenses = todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-            
-            // Cash at Hand calculation
-            const cashAtHand = totalSales - totalTransfer - totalPOS - totalExpenses;
-            
-            // Update dashboard cards
-            document.getElementById('totalSales').textContent = `₦${totalSales.toLocaleString()}`;
-            document.getElementById('totalTransfer').textContent = `₦${totalTransfer.toLocaleString()}`;
-            document.getElementById('totalPOS').textContent = `₦${totalPOS.toLocaleString()}`;
-            document.getElementById('totalExpenses').textContent = `₦${totalExpenses.toLocaleString()}`;
-            
-            // Color code cash at hand
-            const cashElement = document.getElementById('cashAtHand');
-            cashElement.textContent = `₦${cashAtHand.toLocaleString()}`;
-            cashElement.className = cashAtHand >= 0 ? 'number cash-positive' : 'number cash-negative';
-            
-            // Pending credits
-            const pendingCreditsTotal = credits
-                .filter(credit => credit.status === 'pending')
-                .reduce((sum, credit) => sum + credit.amount, 0);
-            document.getElementById('pendingCredits').textContent = `₦${pendingCreditsTotal.toLocaleString()}`;
-            
-            // Update other sections
-            updateRecentGoods();
-            checkLowStock();
-        }
-
+function updateDashboard() {
+    const today = new Date().toDateString();
+    
+    // Calculate daily totals - EXCLUDE credit payment entries from sales totals
+    const todaySales = sales.filter(sale => 
+        new Date(sale.timestamp).toDateString() === today && 
+        !sale.isCreditPayment // This excludes credit payment entries
+    );
+    
+    const todayExpenses = expenses.filter(expense => new Date(expense.timestamp).toDateString() === today);
+    
+    // Total Sales (all payment methods except credit payments)
+    const totalSales = todaySales.reduce((sum, sale) => sum + sale.total, 0);
+    
+    // Total Transfer
+    const totalTransfer = todaySales
+        .filter(sale => sale.paymentMethod === 'transfer')
+        .reduce((sum, sale) => sum + sale.total, 0);
+    
+    // Total POS
+    const totalPOS = todaySales
+        .filter(sale => sale.paymentMethod === 'pos')
+        .reduce((sum, sale) => sum + sale.total, 0);
+    
+    // Total Cash Sales
+    const totalCash = todaySales
+        .filter(sale => sale.paymentMethod === 'cash')
+        .reduce((sum, sale) => sum + sale.total, 0);
+    
+    // Total Expenses
+    const totalExpenses = todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    
+    // Cash at Hand calculation (only actual cash received)
+    const cashAtHand = totalCash - totalExpenses;
+    
+    // Update dashboard cards
+    document.getElementById('totalSales').textContent = `₦${totalSales.toLocaleString()}`;
+    document.getElementById('totalTransfer').textContent = `₦${totalTransfer.toLocaleString()}`;
+    document.getElementById('totalPOS').textContent = `₦${totalPOS.toLocaleString()}`;
+    document.getElementById('totalExpenses').textContent = `₦${totalExpenses.toLocaleString()}`;
+    
+    // Color code cash at hand
+    const cashElement = document.getElementById('cashAtHand');
+    cashElement.textContent = `₦${cashAtHand.toLocaleString()}`;qaqq232
+    cashElement.className = cashAtHand >= 0 ? 'number cash-positive' : 'number cash-negative';
+    
+    // Pending credits
+    const pendingCreditsTotal = credits
+        .filter(credit => credit.status === 'pending')
+        .reduce((sum, credit) => sum + credit.amount, 0);
+    document.getElementById('pendingCredits').textContent = `₦${pendingCreditsTotal.toLocaleString()}`;
+    
+    // Update other sections
+    updateRecentGoods();
+    checkLowStock();
+}
         function updateRecentGoods() {
             // Recent Goods from Market
             const fromMarketTbody = document.querySelector('#recentGoodsFromMarketTable tbody');
@@ -2519,6 +2532,7 @@ HDMI Cable,General Computer Accessories,800,1200,30,0`;
     </script>
 </body>
 </html>
+
 
 
 
