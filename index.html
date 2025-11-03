@@ -1449,21 +1449,31 @@ function checkAndRecoverData() {
             document.getElementById('productMinStock').value = '0';
         }
 
-        function saveProduct() {
-            const product = {
-                id: editingProductId || Date.now().toString(),
-                name: document.getElementById('productName').value,
-                category: document.getElementById('productCategory').value,
-                cost: parseFloat(document.getElementById('productCost').value) || 0,
-                price: parseFloat(document.getElementById('productPrice').value) || 0,
-                stock: parseInt(document.getElementById('productStock').value) || 0,
-                minStock: parseInt(document.getElementById('productMinStock').value) || 0
-            };
+       const product = {
+    id: editingProductId || Date.now().toString(),
+    name: document.getElementById('productName').value,
+    category: document.getElementById('productCategory').value,
+    cost: parseFloat(document.getElementById('productCost').value) || 0,
+    price: parseFloat(document.getElementById('productPrice').value) || 0,
+    stock: parseInt(document.getElementById('productStock').value) || 0,
+    minStock: parseInt(document.getElementById('productMinStock').value) || 0
+};
 
-            if (!product.name) {
-                alert('Please enter product name');
-                return;
-            }
+if (!product.name) {
+    alert('Please enter product name');
+    return;
+}
+
+// ADD THIS VALIDATION - Prevent negative stock and minStock
+if (product.stock < 0) {
+    alert('Stock cannot be negative!');
+    return;
+}
+
+if (product.minStock < 0) {
+    alert('Minimum stock cannot be negative!');
+    return;
+}
 
             if (editingProductId) {
                 const index = products.findIndex(p => p.id === editingProductId);
@@ -1751,15 +1761,20 @@ function addSaleItem() {
         displaySales();
     }
     
-    // Update product stock for both credit and non-credit sales
-    const product = products.find(p => p.name === productName);
-    if (product) {
-        product.stock -= quantity;
-        localStorage.setItem('products', JSON.stringify(products));
+  // Update product stock for both credit and non-credit sales
+const product = products.find(p => p.name === productName);
+if (product) {
+    // Only check stock for products in our inventory
+    if (product.stock < quantity) {
+        alert(`Not enough stock! Only ${product.stock} available.`);
+        return; // Stop the sale if not enough stock
     }
-    
-    updateDashboard();
-    resetSaleForm();
+    product.stock -= quantity;
+    localStorage.setItem('products', JSON.stringify(products));
+    displayProducts(); // Update products display
+}
+updateDashboard();
+resetSaleForm();
 }
 
         function resetSaleForm() {
@@ -2516,26 +2531,25 @@ function updateDashboard() {
     // Total Sales (all payment methods except credit payments)
     const totalSales = todaySales.reduce((sum, sale) => sum + sale.total, 0);
     
-    // Total Transfer
-    const totalTransfer = todaySales
-        .filter(sale => sale.paymentMethod === 'transfer')
-        .reduce((sum, sale) => sum + sale.total, 0);
-    
-    // Total POS
-    const totalPOS = todaySales
-        .filter(sale => sale.paymentMethod === 'pos')
-        .reduce((sum, sale) => sum + sale.total, 0);
-    
-    // Total Cash Sales
-    const totalCash = todaySales
-        .filter(sale => sale.paymentMethod === 'cash')
-        .reduce((sum, sale) => sum + sale.total, 0);
-    
-    // Total Expenses
-    const totalExpenses = todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-    
-    // Cash at Hand calculation (only actual cash received)
-    const cashAtHand = totalCash - totalExpenses;
+   // Total Transfer
+const totalTransfer = todaySales
+    .filter(sale => sale.paymentMethod === 'transfer')
+    .reduce((sum, sale) => sum + sale.total, 0);
+
+// Total POS
+const totalPOS = todaySales
+    .filter(sale => sale.paymentMethod === 'pos')  // Fixed 'post' to 'pos'
+    .reduce((sum, sale) => sum + sale.total, 0);
+
+// Total Expenses
+const totalExpenses = todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+// CORRECT Cash at Hand calculation using your formula:
+// Cash at Hand = Total Sales - (Total Transfer + Total POS + Total Expenses)
+let cashAtHand = totalSales - (totalTransfer + totalPOS + totalExpenses);
+
+// Ensure cash at hand is never negative (show 0 instead of negative)
+cashAtHand = Math.max(0, cashAtHand);
     
     // Update dashboard cards
     document.getElementById('totalSales').textContent = `₦${totalSales.toLocaleString()}`;
@@ -2667,6 +2681,7 @@ function updateDashboard() {
     </script>
 </body>
 </html>
+
 
 
 
