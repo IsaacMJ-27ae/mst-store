@@ -1448,46 +1448,44 @@ function checkAndRecoverData() {
             document.getElementById('productStock').value = '';
             document.getElementById('productMinStock').value = '0';
         }
+function saveProduct() {
+    const product = {
+        id: editingProductId || Date.now().toString(),
+        name: document.getElementById('productName').value,
+        category: document.getElementById('productCategory').value,
+        cost: parseFloat(document.getElementById('productCost').value) || 0,
+        price: parseFloat(document.getElementById('productPrice').value) || 0,
+        stock: parseInt(document.getElementById('productStock').value) || 0,
+        minStock: parseInt(document.getElementById('productMinStock').value) || 0
+    };
 
-       const product = {
-    id: editingProductId || Date.now().toString(),
-    name: document.getElementById('productName').value,
-    category: document.getElementById('productCategory').value,
-    cost: parseFloat(document.getElementById('productCost').value) || 0,
-    price: parseFloat(document.getElementById('productPrice').value) || 0,
-    stock: parseInt(document.getElementById('productStock').value) || 0,
-    minStock: parseInt(document.getElementById('productMinStock').value) || 0
-};
+    if (!product.name) {
+        alert('Please enter product name');
+        return;
+    }
 
-if (!product.name) {
-    alert('Please enter product name');
-    return;
+    if (product.stock < 0) {
+        alert('Stock cannot be negative!');
+        return;
+    }
+
+    if (product.minStock < 0) {
+        alert('Minimum stock cannot be negative!');
+        return;
+    }
+
+    if (editingProductId) {
+        const index = products.findIndex(p => p.id === editingProductId);
+        products[index] = product;
+    } else {
+        products.push(product);
+    }
+
+    localStorage.setItem('products', JSON.stringify(products));
+    displayProducts();
+    hideProductForm();
+    updateDashboard();
 }
-
-// ADD THIS VALIDATION - Prevent negative stock and minStock
-if (product.stock < 0) {
-    alert('Stock cannot be negative!');
-    return;
-}
-
-if (product.minStock < 0) {
-    alert('Minimum stock cannot be negative!');
-    return;
-}
-
-            if (editingProductId) {
-                const index = products.findIndex(p => p.id === editingProductId);
-                products[index] = product;
-            } else {
-                products.push(product);
-            }
-
-            localStorage.setItem('products', JSON.stringify(products));
-            displayProducts();
-            hideProductForm();
-            updateDashboard();
-        }
-
         function editProduct(id) {
             const product = products.find(p => p.id === id);
             if (product) {
@@ -2681,6 +2679,7 @@ cashAtHand = Math.max(0, cashAtHand);
     </script>
 </body>
 </html>
+
 
 
 
